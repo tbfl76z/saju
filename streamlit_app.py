@@ -134,6 +134,10 @@ def initialize_saju_engine(api_key):
 # --- UI 레이아웃 ---
 
 def main():
+    # 데이터 디렉토리 강제 생성 (배포 환경 오류 방지)
+    if not os.path.exists("data"):
+        os.makedirs("data", exist_ok=True)
+        
     st.title("命 理 (명 리)")
     st.markdown("<h3 style='text-align: center; opacity: 0.8;'>AI 정통 사주 심층 분석</h3>", unsafe_allow_html=True)
     st.divider()
@@ -142,7 +146,11 @@ def main():
     with st.sidebar:
         st.header("설정")
         stored_key = load_api_key()
-        api_key = st.text_input("Gemini API Key", type="password", value=stored_key if stored_key else os.environ.get("GOOGLE_API_KEY", ""))
+        # Streamlit Secrets 우선 순위 적용
+        secrets_key = st.secrets.get("GOOGLE_API_KEY", "")
+        default_key = secrets_key if secrets_key else stored_key
+        
+        api_key = st.text_input("Gemini API Key", type="password", value=default_key)
         if st.button("엔진 초기화 / 데이터 새로고침"):
             if 'saju_engine_ready' in st.session_state:
                 del st.session_state['saju_engine_ready']
