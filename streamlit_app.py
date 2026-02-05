@@ -137,7 +137,12 @@ def main():
         col1, col2 = st.columns(2)
         with col1:
             name = st.text_input("이름 (선택)", placeholder="홍길동")
-            birth_date = st.date_input("생년월일", value=datetime.date(1990, 1, 1))
+            birth_date = st.date_input(
+                "생년월일", 
+                value=datetime.date(1990, 1, 1),
+                min_value=datetime.date(1900, 1, 1),
+                max_value=datetime.date(2100, 12, 31)
+            )
         with col2:
             gender = st.radio("성별", ["여", "남"], horizontal=True)
             birth_time = st.time_input("태어난 시각", value=datetime.time(0, 0))
