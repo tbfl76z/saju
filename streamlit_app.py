@@ -142,29 +142,21 @@ def main():
     st.markdown("<h3 style='text-align: center; opacity: 0.8;'>AI 정통 사주 심층 분석</h3>", unsafe_allow_html=True)
     st.divider()
 
-    # 사이드바 (설정 메뉴)
+    # 사이드바 (이용 안내만 유지)
     with st.sidebar:
-        st.header("⚙️ 환경 설정")
-        # API 키 로드 (Secrets 우선, 그 다음 .env)
+        # API 키 내부 로드 (UI 노출 없음)
         secrets_key = st.secrets.get("GOOGLE_API_KEY", "")
         stored_key = load_api_key()
         api_key = secrets_key if secrets_key else stored_key
         
-        if st.button("🔄 엔진 초기화 / 데이터 새로고침"):
-            if 'saju_engine_ready' in st.session_state:
-                del st.session_state['saju_engine_ready']
-            if 'uploaded_file_objects' in st.session_state:
-                del st.session_state['uploaded_file_objects']
-            st.rerun()
-            
-        st.markdown("---")
-        st.markdown("### 📖 이용 안내")
+        st.markdown("### � 이용 안내")
+        st.info("정통 명리학의 지혜와 AI 기술을 결합하여 당신의 운명을 심층적으로 분석합니다.")
         st.caption("1. 상단 링크에서 만세력 확인")
         st.caption("2. 결과 내용 전체 복사")
         st.caption("3. 본 앱에 붙여넣고 풀이 시작")
         
         if not api_key:
-            st.warning("⚠️ API 키가 설정되지 않았습니다. 배포 설정의 Secrets를 확인해 주세요.")
+            st.error("⚠️ 설정에서 API 키가 누락되었습니다.")
 
     # 상단 가이드 및 외부 주소 안내
     st.markdown("""
