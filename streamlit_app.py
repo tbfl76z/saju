@@ -5,6 +5,7 @@ import google.generativeai as genai
 from google.generativeai import caching
 import glob
 from sajupy import calculate_saju, get_saju_details, lunar_to_solar
+from saju_utils import get_extended_saju_data
 
 # 페이지 설정: 제목 및 아이콘
 st.set_page_config(page_title="명리(命理) - AI 사주 풀이", page_icon="🔮", layout="centered")
@@ -166,6 +167,9 @@ def main():
             saju_res = calculate_saju(y, m, d, birth_time.hour, birth_time.minute)
             details = get_saju_details(saju_res)
             
+            # 확장 데이터 추가 (십성, 12운성, 오행 등)
+            details = get_extended_saju_data(details)
+            
             st.session_state['saju_data'] = details
             st.session_state['target_name'] = name
             st.session_state['target_gender'] = gender
@@ -183,9 +187,9 @@ def main():
         html_table = f"""
         <table class='saju-table'>
             <tr><th>구분</th><th>시주(時)</th><th>일주(日)</th><th>월주(月)</th><th>연주(年)</th></tr>
-            <tr><td>천간</td><td class='pillar-cell'>{pillars['hour'][0]}</td><td class='pillar-cell'>{pillars['day'][0]}</td><td class='pillar-cell'>{pillars['month'][0]}</td><td class='pillar-cell'>{pillars['year'][0]}</td></tr>
-            <tr><td>지지</td><td class='pillar-cell'>{pillars['hour'][1]}</td><td class='pillar-cell'>{pillars['day'][1]}</td><td class='pillar-cell'>{pillars['month'][1]}</td><td class='pillar-cell'>{pillars['year'][1]}</td></tr>
-            <tr><td>십성</td><td class='ten-god'>{data['ten_gods']['hour']}</td><td class='ten-god'>-</td><td class='ten-god'>{data['ten_gods']['month']}</td><td class='ten-god'>{data['ten_gods']['year']}</td></tr>
+            <tr><td>천간</td><td class='pillar-cell'>{pillars['hour']['stem']}</td><td class='pillar-cell'>{pillars['day']['stem']}</td><td class='pillar-cell'>{pillars['month']['stem']}</td><td class='pillar-cell'>{pillars['year']['stem']}</td></tr>
+            <tr><td>지지</td><td class='pillar-cell'>{pillars['hour']['branch']}</td><td class='pillar-cell'>{pillars['day']['branch']}</td><td class='pillar-cell'>{pillars['month']['branch']}</td><td class='pillar-cell'>{pillars['year']['branch']}</td></tr>
+            <tr><td>십성</td><td class='ten-god'>{data['ten_gods']['hour']}</td><td class='ten-god'>{data['ten_gods']['day']}</td><td class='ten-god'>{data['ten_gods']['month']}</td><td class='ten-god'>{data['ten_gods']['year']}</td></tr>
             <tr><td>12운성</td><td>{data['twelve_growth']['hour']}</td><td>{data['twelve_growth']['day']}</td><td>{data['twelve_growth']['month']}</td><td>{data['twelve_growth']['year']}</td></tr>
         </table>
         """
