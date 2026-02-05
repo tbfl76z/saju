@@ -146,7 +146,7 @@ def main():
             )
         with col2:
             gender = st.radio("성별", ["여", "남"], horizontal=True)
-            birth_time = st.time_input("태어난 시각", value=datetime.time(0, 0))
+            birth_time = st.time_input("태어난 시각", value=datetime.time(0, 0), step=60)
             
         col3, col4 = st.columns(2)
         with col3:
@@ -156,19 +156,24 @@ def main():
 
     if st.button("사주 명식 계산하기"):
         try:
-            # 음력일 경우 양력으로 변환
+            # 태양시 보정 (동경 표준시 - 30분)
+            # 한국 시간은 동경 표준시(135도) 기준이나, 실제 위치(약 127.5도)상 약 30분 정도 느림
+            input_dt = datetime.datetime.combine(birth_date, birth_time)
+            corrected_dt = input_dt - datetime.timedelta(minutes=30)
+            
+            # 음력일 경우 양력으로 변환 (보정된 날짜 기준)
             if calendar_type == "음력":
-                solar_res = lunar_to_solar(birth_date.year, birth_date.month, birth_date.day, is_leap_month=is_leap)
+                solar_res = lunar_to_solar(corrected_dt.year, corrected_dt.month, corrected_dt.day, is_leap_month=is_leap)
                 y, m, d = solar_res['solar_year'], solar_res['solar_month'], solar_res['solar_day']
             else:
-                y, m, d = birth_date.year, birth_date.month, birth_date.day
+                y, m, d = corrected_dt.year, corrected_dt.month, corrected_dt.day
             
-            # 사주 계산
-            saju_res = calculate_saju(y, m, d, birth_time.hour, birth_time.minute)
+            # 사주 계산 (보정된 시/분 사용)
+            saju_res = calculate_saju(y, m, d, corrected_dt.hour, corrected_dt.minute)
             details = get_saju_details(saju_res)
             
-            # 확장 데이터 추가 (십성, 12운성, 오행 등)
-            details = get_extended_saju_data(details)
+            # 확장 데이터 추가 (십성, 12운성, 오행, 대운, 신살 등)
+            details = get_extended_saju_data(details, gender=gender)
             
             st.session_state['saju_data'] = details
             st.session_state['target_name'] = name
@@ -183,17 +188,23 @@ def main():
         pillars = data['pillars']
         
         st.subheader("🔮 사주 4주 명식")
-        # 테이블 시각화
+        # 테이블 시각화 (신살 및 지지십성 추가)
         html_table = f"""
         <table class='saju-table'>
             <tr><th>구분</th><th>시주(時)</th><th>일주(日)</th><th>월주(月)</th><th>연주(年)</th></tr>
             <tr><td>천간</td><td class='pillar-cell'>{pillars['hour']['stem']}</td><td class='pillar-cell'>{pillars['day']['stem']}</td><td class='pillar-cell'>{pillars['month']['stem']}</td><td class='pillar-cell'>{pillars['year']['stem']}</td></tr>
             <tr><td>지지</td><td class='pillar-cell'>{pillars['hour']['branch']}</td><td class='pillar-cell'>{pillars['day']['branch']}</td><td class='pillar-cell'>{pillars['month']['branch']}</td><td class='pillar-cell'>{pillars['year']['branch']}</td></tr>
             <tr><td>십성</td><td class='ten-god'>{data['ten_gods']['hour']}</td><td class='ten-god'>{data['ten_gods']['day']}</td><td class='ten-god'>{data['ten_gods']['month']}</td><td class='ten-god'>{data['ten_gods']['year']}</td></tr>
+            <tr><td>지지십성</td><td>{data['jiji_ten_gods']['hour']}</td><td>{data['jiji_ten_gods']['day']}</td><td>{data['jiji_ten_gods']['month']}</td><td>{data['jiji_ten_gods']['year']}</td></tr>
             <tr><td>12운성</td><td>{data['twelve_growth']['hour']}</td><td>{data['twelve_growth']['day']}</td><td>{data['twelve_growth']['month']}</td><td>{data['twelve_growth']['year']}</td></tr>
+            <tr><td>신살</td><td>{data['sinsal']['hour']}</td><td>{data['sinsal']['day']}</td><td>{data['sinsal']['month']}</td><td>{data['sinsal']['year']}</td></tr>
         </table>
         """
         st.markdown(html_table, unsafe_allow_html=True)
+        
+        # 지지 관계(형충회합) 표시
+        if data.get('relations'):
+            st.info(f"💡 **지지 관계:** {', '.join(data['relations'])}")
         
         # 오행 분포 시각화 고도화
         elems = data['five_elements']
@@ -205,6 +216,59 @@ def main():
             # 시각적 강도 표시 (8개를 만점으로 가정)
             progress_val = min(val / 8, 1.0)
             cols[idx].progress(progress_val)
+
+        # 대운(Daeun) 시각화
+        st.subheader("📅 대운(大運)의 흐름")
+        st.write(f"현재 대운수: **{data['fortune']['num']}** (대운이 바뀌는 나이)")
+        
+        df_list = data['fortune']['list']
+        cols = st.columns(5)
+        for i, item in enumerate(df_list):
+            with cols[i % 5]:
+                st.markdown(f"""
+                <div style='border:1px solid #ddd; padding:10px; border-radius:10px; text-align:center; background-color:#f9f9f9; margin-bottom:10px;'>
+                    <div style='font-size:0.8rem; color:#666;'>{item['age']}세~</div>
+                    <div style='font-size:1.1rem; font-weight:bold; color:#d63384;'>{item['ganzhi']}</div>
+                    <div style='font-size:0.8rem;'>{item['stem_ten_god']}</div>
+                    <div style='font-size:0.8rem;'>{item['branch_ten_god']}</div>
+                    <div style='font-size:0.7rem; color:#0d6efd;'>{item['twelve_growth']}</div>
+                </div>
+                """, unsafe_allow_html=True)
+            if (i+1) % 5 == 0 and i < len(df_list)-1:
+                cols = st.columns(5)
+
+        # 세운(Seyun) 시각화
+        from saju_utils import get_seyun_data
+        cur_year = datetime.datetime.now().year
+        seyun = get_seyun_data(pillars['day']['stem'], cur_year)
+        if seyun:
+            st.subheader(f"✨ {cur_year}년 올해의 운세")
+            st.markdown(f"""
+            <div style='display:flex; gap:15px; justify-content:center; padding:15px; background-color:#fff3cd; border-radius:15px;'>
+                <div style='text-align:center;'><small>연도</small><br><b>{cur_year}</b></div>
+                <div style='text-align:center;'><small>간지</small><br><b style='color:#d63384;'>{seyun['ganzhi']}</b></div>
+                <div style='text-align:center;'><small>십성(천/지)</small><br>{seyun['stem_ten_god']}/{seyun['branch_ten_god']}</div>
+                <div style='text-align:center;'><small>12운성</small><br>{seyun['twelve_growth']}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # 월운(Wolun) 시각화 - 현재 연도 기준
+            from saju_utils import get_wolun_data
+            st.subheader(f"📅 {cur_year}년 월별 운세 흐름")
+            
+            w_cols = st.columns(6)
+            for m in range(1, 13):
+                wolun = get_wolun_data(pillars['day']['stem'], seyun['ganzhi'], m)
+                with w_cols[(m-1) % 6]:
+                    st.markdown(f"""
+                    <div style='border:1px solid #f0f0f0; padding:5px; border-radius:8px; text-align:center; background-color:#fff; margin-bottom:5px;'>
+                        <div style='font-size:0.75rem; color:#888;'>{m}월</div>
+                        <div style='font-size:1.0rem; font-weight:bold;'>{wolun['ganzhi']}</div>
+                        <div style='font-size:0.7rem; color:#d63384;'>{wolun['stem_ten_god']}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                if m == 6:
+                    w_cols = st.columns(6)
 
         st.divider()
         
@@ -224,9 +288,12 @@ def main():
                     saju_summary = f"""
                     [대상자] {name_str} ({gender_str})
                     [양력 생일] {data['birth_date']} {data['birth_time']}
-                    [사주] 연:{pillars['year']}, 월:{pillars['month']}, 일:{pillars['day']}, 시:{pillars['hour']}
+                    [사주 4주] 연:{pillars['year']['pillar']}, 월:{pillars['month']['pillar']}, 일:{pillars['day']['pillar']}, 시:{pillars['hour']['pillar']}
                     [오행분포] {elems}
-                    [환경] {data['zi_time_type']}
+                    [신살 및 관계] {data['sinsal']}, {data['relations']}
+                    [대운 정보] 대운수 {data['fortune']['num']}, 전체 리스트: {data['fortune']['list']}
+                    [현재 세운] {cur_year}년 ({seyun['ganzhi'] if seyun else 'N/A'})
+                    [월운 예시] {cur_year}년 1~12월 흐름 가용함
                     """
                     
                     prompt = f"""
@@ -237,9 +304,9 @@ def main():
                     **일반인도 한눈에 이해할 수 있도록 친절하고 쉬운 비유**를 사용하여 보고서를 작성해 주세요.
                     
                     보고서 구성 필수 항목:
-                    1. 🖼️ **운명의 풍경**: 이 사주의 구성을 한 폭의 그림이나 풍경으로 묘사해 주세요. (예: "끝없는 평야에 홀로 서 있는 소나무의 형상입니다")
-                    2. 🌱 **나의 본 모습**: 어려운 용어 대신 비유(자연물, 도구 등)를 통해 타고난 성정과 기질을 쉽게 설명해 주세요.
-                    3. 🎢 **운의 흐름**: 현재와 미래의 운의 흐름을 날씨나 계절의 변화에 비유하여 알려주세요.
+                    1. 🖼️ **운명의 풍경**: 이 사주의 구성을 한 폭의 그림이나 풍경으로 묘사해 주세요.
+                    2. 🌱 **나의 본 모습**: 비유를 통해 타고난 성정과 기질, 장단점을 쉽게 설명해 주세요.
+                    3. 🎢 **대운과 세운의 흐름**: 현재 대운(10년 주기)과 올해 세운, 그리고 월별 흐름을 종합하여 날씨나 계절 변화에 비유하여 알려주세요.
                     4. 💡 **대가의 조언**: 일상에서 실천할 수 있는 구체적이고 따뜻한 조언을 담아주세요.
                     
                     *반드시 수필처럼 유려한 한글 문체로 작성하며, 전문 용어가 나올 경우 반드시 쉬운 풀이를 덧붙여 주십시오.*
