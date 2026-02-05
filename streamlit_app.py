@@ -156,21 +156,26 @@ def main():
 
     if st.button("사주 명식 계산하기"):
         try:
-            # 태양시 보정 (동경 표준시 - 30분)
-            # 한국 시간은 동경 표준시(135도) 기준이나, 실제 위치(약 127.5도)상 약 30분 정도 느림
-            input_dt = datetime.datetime.combine(birth_date, birth_time)
-            corrected_dt = input_dt - datetime.timedelta(minutes=30)
-            
-            # 음력일 경우 양력으로 변환 (보정된 날짜 기준)
-            if calendar_type == "음력":
-                solar_res = lunar_to_solar(corrected_dt.year, corrected_dt.month, corrected_dt.day, is_leap_month=is_leap)
-                y, m, d = solar_res['solar_year'], solar_res['solar_month'], solar_res['solar_day']
-            else:
-                y, m, d = corrected_dt.year, corrected_dt.month, corrected_dt.day
-            
-            # 사주 계산 (보정된 시/분 사용)
-            saju_res = calculate_saju(y, m, d, corrected_dt.hour, corrected_dt.minute)
+            # 사주 계산 (라이브러리 내 태양시 보정 및 23:30 경계 설정 사용)
+            # use_solar_time=True, longitude=127.5 (동경 표준시 대비 30분 보정)
+            # early_zi_time=False (23시부터 다음날로 처리하는 자시 기준 - 23:30 보정 시 정확히 한국 기준)
+            saju_res = calculate_saju(
+                birth_date.year, birth_date.month, birth_date.day, 
+                birth_time.hour, birth_time.minute,
+                use_solar_time=True, 
+                longitude=127.5,
+                early_zi_time=False
+            )
             details = get_saju_details(saju_res)
+            
+            # 음력일 경우 보정된 양력으로 재계산 (디테일 갱신 필요 시)
+            if calendar_type == "음력":
+                # sajupy는 내부적으로 양력 데이터를 사용하므로 음력->양력 변환 후 재계산
+                solar_res = lunar_to_solar(birth_date.year, birth_date.month, birth_date.day, is_leap_month=is_leap)
+                y, m, d = solar_res['solar_year'], solar_res['solar_month'], solar_res['solar_day']
+                saju_res = calculate_saju(y, m, d, birth_time.hour, birth_time.minute, 
+                                        use_solar_time=True, longitude=127.5, early_zi_time=False)
+                details = get_saju_details(saju_res)
             
             # 확장 데이터 추가 (십성, 12운성, 오행, 대운, 신살 등)
             details = get_extended_saju_data(details, gender=gender)
