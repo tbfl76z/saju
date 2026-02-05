@@ -142,22 +142,29 @@ def main():
     st.markdown("<h3 style='text-align: center; opacity: 0.8;'>AI 정통 사주 심층 분석</h3>", unsafe_allow_html=True)
     st.divider()
 
-    # 사이드바 (API 키 설정)
+    # 사이드바 (설정 메뉴)
     with st.sidebar:
-        st.header("설정")
-        stored_key = load_api_key()
-        # Streamlit Secrets 우선 순위 적용
+        st.header("⚙️ 환경 설정")
+        # API 키 로드 (Secrets 우선, 그 다음 .env)
         secrets_key = st.secrets.get("GOOGLE_API_KEY", "")
-        default_key = secrets_key if secrets_key else stored_key
+        stored_key = load_api_key()
+        api_key = secrets_key if secrets_key else stored_key
         
-        api_key = st.text_input("Gemini API Key", type="password", value=default_key)
-        if st.button("엔진 초기화 / 데이터 새로고침"):
+        if st.button("🔄 엔진 초기화 / 데이터 새로고침"):
             if 'saju_engine_ready' in st.session_state:
                 del st.session_state['saju_engine_ready']
             if 'uploaded_file_objects' in st.session_state:
                 del st.session_state['uploaded_file_objects']
             st.rerun()
-        st.info("API 키 및 데이터를 관리합니다. 문제가 생기면 위 버튼을 눌러주세요.")
+            
+        st.markdown("---")
+        st.markdown("### 📖 이용 안내")
+        st.caption("1. 상단 링크에서 만세력 확인")
+        st.caption("2. 결과 내용 전체 복사")
+        st.caption("3. 본 앱에 붙여넣고 풀이 시작")
+        
+        if not api_key:
+            st.warning("⚠️ API 키가 설정되지 않았습니다. 배포 설정의 Secrets를 확인해 주세요.")
 
     # 상단 가이드 및 외부 주소 안내
     st.markdown("""
