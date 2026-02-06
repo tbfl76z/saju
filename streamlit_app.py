@@ -120,14 +120,7 @@ def main():
     if not os.path.exists("data"):
         os.makedirs("data", exist_ok=True)
         
-    # 제목 및 로고 배치
-    t_col1, t_col2 = st.columns([1, 4])
-    with t_col1:
-        st.write("") # 간격 조절용
-        st.image("C:/Users/swahn/.gemini/antigravity/brain/986d8fd1-d4c8-4ba2-b7c5-dafcd4dc9361/media__1770354119643.png", width=80)
-    with t_col2:
-        st.title("Destiny Code")
-    
+    st.title("Destiny Code")
     st.markdown("<h3 style='text-align: center; opacity: 0.8;'>Your Life, Written in Code.</h3>", unsafe_allow_html=True)
     st.divider()
 
@@ -389,8 +382,8 @@ def main():
                     r_cols = st.columns(5)
                     r_cols[0].markdown(f"<div style='text-align:center; padding:12px; font-weight:700; color:#444; border-bottom:1px solid #eee;'>{label}</div>", unsafe_allow_html=True)
                     for c_idx, val in enumerate(vals):
-                        with r_cols[c_idx+1]:
-                            term_popover(label, val, f"daeun_{label}_{c_idx}")
+                        color = "#d63384" if any(x in val for x in ["충", "형", "파", "해"]) else ("#198754" if "합" in val else "#333")
+                        r_cols[c_idx+1].markdown(f"<div style='text-align:center; padding:12px; font-size:1rem; color:{color}; border-bottom:1px solid #eee;'>{val}</div>", unsafe_allow_html=True)
                 
                 st.markdown("---")
 
@@ -520,8 +513,8 @@ def main():
                         r_cols = st.columns(num_cols)
                         r_cols[0].markdown(f"<div style='text-align:center; padding:10px; font-weight:700; color:#444; border-bottom:1px solid #eee; font-size:0.8rem;'>{label}</div>", unsafe_allow_html=True)
                         for c_idx, val in enumerate(vals):
-                            with r_cols[c_idx+1]:
-                                term_popover(label, val, f"seyun_{label}_{c_idx}")
+                            color = "#d63384" if any(x in val for x in ["충", "형", "파", "해"]) else ("#198754" if "합" in val else "#333")
+                            r_cols[c_idx+1].markdown(f"<div style='text-align:center; padding:10px; font-size:0.9rem; color:{color}; border-bottom:1px solid #eee;'>{val}</div>", unsafe_allow_html=True)
                     
                     st.markdown("---")
 
@@ -541,17 +534,15 @@ def main():
                                      pillars=pillars, 
                                      day_branch=pillars.get('day', {}).get('branch', '丑'))
                 with w_cols[(m-1) % 4]:
-                    # 월운 카드 디자인 (네이티브 Streamlit 구성으로 popover 지원)
-                    with st.container(border=True):
-                        st.markdown(f"<div style='text-align:center; font-weight:bold; color:#666;'>{m}월</div>", unsafe_allow_html=True)
-                        st.markdown(f"<div style='text-align:center; font-size:1.3rem; font-weight:bold; color:#2c3e50;'>{wolun.get('ganzhi', '-')}</div>", unsafe_allow_html=True)
-                        # 십성 팝업
-                        tg_val = f"{wolun.get('stem_ten_god', '-')} | {wolun.get('branch_ten_god', '-')}"
-                        term_popover("월운 십성", tg_val, f"wolun_tg_{m}")
-                        # 운성 팝업
-                        term_popover("월운 운성", wolun.get('twelve_growth', '-'), f"wolun_gr_{m}")
-                        # 신살 팝업
-                        term_popover("월운 신살", wolun.get('sinsal', '-'), f"wolun_ss_{m}")
+                    st.markdown(f"""
+                    <div style='border:1px solid #f0f0f0; padding:10px; border-radius:12px; text-align:center; background-color:#fff; margin-bottom:10px; border-left:4px solid #ffc107;'>
+                        <div style='font-size:0.85rem; font-weight:bold; color:#666;'>{m}월</div>
+                        <div style='font-size:1.3rem; font-weight:bold; color:#2c3e50;'>{wolun.get('ganzhi', '-')}</div>
+                        <div style='font-size:0.8rem; color:#d63384;'>{wolun.get('stem_ten_god', '-')} | {wolun.get('branch_ten_god', '-')}</div>
+                        <div style='font-size:0.7rem; color:#1976d2;'>{wolun.get('twelve_growth', '-')}</div>
+                        <div style='font-size:0.7rem; color:#198754;'>{wolun.get('sinsal', '-')}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
 
         st.divider()
         
