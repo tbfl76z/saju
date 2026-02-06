@@ -187,6 +187,8 @@ def main():
             st.session_state['saju_data'] = details
             st.session_state['target_name'] = name
             st.session_state['target_gender'] = gender
+            # 데이터 버전 관리용 플래그
+            st.session_state['data_version'] = "v2"
             st.success("사주 명식이 정확하게 계산되었습니다.")
         except Exception as e:
             st.error(f"계산 중 오류 발생: {str(e)}")
@@ -238,12 +240,12 @@ def main():
                 with cols[idx]:
                     st.markdown(f"""
                     <div style='border:1px solid #e0e0e0; padding:12px; border-radius:12px; text-align:center; background-color:#ffffff; margin-bottom:15px; box-shadow: 2px 2px 5px rgba(0,0,0,0.05);'>
-                        <div style='font-size:0.9rem; font-weight:bold; color:#ff9800;'>{item['age']}세~</div>
-                        <div style='font-size:1.6rem; font-weight:bold; color:#2c3e50; margin:5px 0;'>{item['ganzhi']}</div>
-                        <div style='font-size:0.85rem; color:#d32f2f;'>{item['stem_ten_god']} | {item['branch_ten_god']}</div>
-                        <div style='font-size:0.8rem; color:#1976d2;'>{item['twelve_growth']}</div>
-                        <div style='font-size:0.75rem; color:#388e3c; margin-top:5px;'>✨ {item['sinsal']}</div>
-                        <div style='font-size:0.7rem; color:#7b1fa2;'>🔗 {item['relations']}</div>
+                        <div style='font-size:0.9rem; font-weight:bold; color:#ff9800;'>{item.get('age', '-')}세~</div>
+                        <div style='font-size:1.6rem; font-weight:bold; color:#2c3e50; margin:5px 0;'>{item.get('ganzhi', '-')}</div>
+                        <div style='font-size:0.85rem; color:#d32f2f;'>{item.get('stem_ten_god', '-')} | {item.get('branch_ten_god', '-')}</div>
+                        <div style='font-size:0.8rem; color:#1976d2;'>{item.get('twelve_growth', '-')}</div>
+                        <div style='font-size:0.75rem; color:#388e3c; margin-top:5px;'>✨ {item.get('sinsal', '-')}</div>
+                        <div style='font-size:0.7rem; color:#7b1fa2;'>🔗 {item.get('relations', '-')}</div>
                     </div>
                     """, unsafe_allow_html=True)
 
@@ -270,16 +272,16 @@ def main():
             
             w_cols = st.columns(4)
             for m in range(1, 13):
-                wolun = get_wolun_data(pillars['day']['stem'], pillars['year']['branch'], seyun['ganzhi'], m, pillars=pillars)
+                wolun = get_wolun_data(pillars['day']['stem'], pillars['year']['branch'], seyun.get('ganzhi', '甲子'), m, pillars=pillars)
                 with w_cols[(m-1) % 4]:
                     st.markdown(f"""
                     <div style='border:1px solid #f0f0f0; padding:10px; border-radius:12px; text-align:center; background-color:#fff; margin-bottom:10px; border-left:4px solid #ffc107;'>
                         <div style='font-size:0.85rem; font-weight:bold; color:#666;'>{m}월</div>
-                        <div style='font-size:1.3rem; font-weight:bold; color:#2c3e50;'>{wolun['ganzhi']}</div>
-                        <div style='font-size:0.8rem; color:#d63384;'>{wolun['stem_ten_god']} | {wolun['branch_ten_god']}</div>
-                        <div style='font-size:0.7rem; color:#1976d2;'>{wolun['twelve_growth']}</div>
-                        <div style='font-size:0.7rem; color:#198754;'>{wolun['sinsal']}</div>
-                        <div style='font-size:0.65rem; color:#dc3545;'>{wolun['relations']}</div>
+                        <div style='font-size:1.3rem; font-weight:bold; color:#2c3e50;'>{wolun.get('ganzhi', '-')}</div>
+                        <div style='font-size:0.8rem; color:#d63384;'>{wolun.get('stem_ten_god', '-')} | {wolun.get('branch_ten_god', '-')}</div>
+                        <div style='font-size:0.7rem; color:#1976d2;'>{wolun.get('twelve_growth', '-')}</div>
+                        <div style='font-size:0.7rem; color:#198754;'>{wolun.get('sinsal', '-')}</div>
+                        <div style='font-size:0.65rem; color:#dc3545;'>{wolun.get('relations', '-')}</div>
                     </div>
                     """, unsafe_allow_html=True)
 
