@@ -367,27 +367,41 @@ def main():
                     from saju_utils import GAN_TEN_GODS, BRANCH_HIDDEN_GANS, TWELVE_GROWTH, STEM_RELATIONS, BRANCH_RELATIONS
                     day_gan = pillars['day']['stem']
                     
-                    # 관계 산출
-                    rels = []
-                    if STEM_RELATIONS['충'].get(d_stem) == p_stem: rels.append("충(沖)")
-                    if STEM_RELATIONS['합'].get(d_stem) == p_stem: rels.append("합(合)")
-                    if BRANCH_RELATIONS['충'].get(d_branch) == p_branch: rels.append("충(沖)")
-                    if BRANCH_RELATIONS['합'].get(d_branch) == p_branch: rels.append("합(合)")
+                    # 관계 산출 (합충형파해 vs 신살 분리)
+                    inter_rels = []
+                    sinsal_rels = []
+                    
+                    if STEM_RELATIONS['충'].get(d_stem) == p_stem: inter_rels.append("충(沖)")
+                    if STEM_RELATIONS['합'].get(d_stem) == p_stem: inter_rels.append("합(合)")
+                    if BRANCH_RELATIONS['충'].get(d_branch) == p_branch: inter_rels.append("충(沖)")
+                    if BRANCH_RELATIONS['합'].get(d_branch) == p_branch: inter_rels.append("합(合)")
                     
                     h_val = BRANCH_RELATIONS['형'].get(d_branch)
                     if h_val:
                         if isinstance(h_val, list):
-                            if p_branch in h_val: rels.append("형(刑)")
-                        elif h_val == p_branch: rels.append("형(刑)")
+                            if p_branch in h_val: inter_rels.append("형(刑)")
+                        elif h_val == p_branch: inter_rels.append("형(刑)")
                     
-                    if BRANCH_RELATIONS['파'].get(d_branch) == p_branch: rels.append("파(破)")
-                    if BRANCH_RELATIONS['해'].get(d_branch) == p_branch: rels.append("해(害)")
+                    if BRANCH_RELATIONS['파'].get(d_branch) == p_branch: inter_rels.append("파(破)")
+                    if BRANCH_RELATIONS['해'].get(d_branch) == p_branch: inter_rels.append("해(害)")
+                    
+                    # 원진, 귀문은 신살 영역으로 분류
+                    if BRANCH_RELATIONS['원진'].get(d_branch) == p_branch: sinsal_rels.append("원진(元嗔)")
+                    if BRANCH_RELATIONS['귀문'].get(d_branch) == p_branch: sinsal_rels.append("귀문(鬼門)")
+                    
+                    # 12신살 추가 (년지 기준)
+                    year_branch = pillars['year']['branch']
+                    from saju_utils import get_sinsal_list
+                    twelve_sinsal = get_sinsal_list(year_branch, d_branch)
+                    if twelve_sinsal and twelve_sinsal not in sinsal_rels:
+                        sinsal_rels.append(twelve_sinsal)
                     
                     return {
                         "ganzhi": p['pillar'],
                         "ten_god": GAN_TEN_GODS.get(day_gan, {}).get(p_stem, '-'),
-                        "growth": TWELVE_GROWTH.get(d_stem, {}).get(p_branch, '-'), # 대운 천간 기준 원국 지지 운성
-                        "interaction": ", ".join(rels) if rels else "평온"
+                        "growth": TWELVE_GROWTH.get(d_stem, {}).get(p_branch, '-'),
+                        "sinsal": ", ".join(sinsal_rels) if sinsal_rels else "-",
+                        "interaction": ", ".join(inter_rels) if inter_rels else "평온"
                     }
 
                 # 시각화 표 구성
@@ -403,6 +417,7 @@ def main():
                     ("원국 간지", [p_data[k]['ganzhi'] for k in p_keys]),
                     ("해당 기둥 십성", [p_data[k]['ten_god'] for k in p_keys]),
                     ("대운 기준 운성", [p_data[k]['growth'] for k in p_keys]),
+                    ("적용 신살", [p_data[k]['sinsal'] for k in p_keys]),
                     ("합·충·형·파·해", [p_data[k]['interaction'] for k in p_keys])
                 ]
                 
@@ -488,27 +503,42 @@ def main():
                         from saju_utils import GAN_TEN_GODS, TWELVE_GROWTH, STEM_RELATIONS, BRANCH_RELATIONS
                         day_gan = pillars['day']['stem']
                         
-                        rels = []
-                        if STEM_RELATIONS['충'].get(s_stem) == t_stem: rels.append("충(沖)")
-                        if STEM_RELATIONS['합'].get(s_stem) == t_stem: rels.append("합(合)")
-                        if BRANCH_RELATIONS['충'].get(s_branch) == t_branch: rels.append("충(沖)")
-                        if BRANCH_RELATIONS['합'].get(s_branch) == t_branch: rels.append("합(合)")
+                        # 관계 산출 (합충형파해 vs 신살 분리)
+                        inter_rels = []
+                        sinsal_rels = []
+                        
+                        if STEM_RELATIONS['충'].get(s_stem) == t_stem: inter_rels.append("충(沖)")
+                        if STEM_RELATIONS['합'].get(s_stem) == t_stem: inter_rels.append("합(合)")
+                        if BRANCH_RELATIONS['충'].get(s_branch) == t_branch: inter_rels.append("충(沖)")
+                        if BRANCH_RELATIONS['합'].get(s_branch) == t_branch: inter_rels.append("합(合)")
                         
                         h_val = BRANCH_RELATIONS['형'].get(s_branch)
                         if h_val:
                             if isinstance(h_val, list):
-                                if t_branch in h_val: rels.append("형(刑)")
-                            elif h_val == t_branch: rels.append("형(刑)")
+                                if t_branch in h_val: inter_rels.append("형(刑)")
+                            elif h_val == t_branch: inter_rels.append("형(刑)")
                         
-                        if BRANCH_RELATIONS['파'].get(s_branch) == t_branch: rels.append("파(破)")
-                        if BRANCH_RELATIONS['해'].get(s_branch) == t_branch: rels.append("해(害)")
+                        if BRANCH_RELATIONS['파'].get(s_branch) == t_branch: inter_rels.append("파(破)")
+                        if BRANCH_RELATIONS['해'].get(s_branch) == t_branch: inter_rels.append("해(害)")
+                        
+                        # 원진, 귀문은 신살 영역으로 분류
+                        if BRANCH_RELATIONS['원진'].get(s_branch) == t_branch: sinsal_rels.append("원진(元嗔)")
+                        if BRANCH_RELATIONS['귀문'].get(s_branch) == t_branch: sinsal_rels.append("귀문(鬼門)")
+                        
+                        # 12신살 (년지 기준)
+                        year_branch = pillars['year']['branch']
+                        from saju_utils import get_sinsal_list
+                        twelve_sinsal = get_sinsal_list(year_branch, s_branch)
+                        if twelve_sinsal and twelve_sinsal not in sinsal_rels:
+                            sinsal_rels.append(twelve_sinsal)
                         
                         return {
                             "name": target_name,
                             "ganzhi": target_pillar_val,
                             "ten_god": GAN_TEN_GODS.get(day_gan, {}).get(t_stem, '-'),
                             "growth": TWELVE_GROWTH.get(s_stem, {}).get(t_branch, '-'),
-                            "interaction": ", ".join(rels) if rels else "평온"
+                            "sinsal": ", ".join(sinsal_rels) if sinsal_rels else "-",
+                            "interaction": ", ".join(inter_rels) if inter_rels else "평온"
                         }
 
                     # 분석 대상 설정: 4주 원국 + 대운
@@ -534,6 +564,7 @@ def main():
                         ("대상 간지", [d['ganzhi'] for d in sy_data]),
                         ("대상 십성", [d['ten_god'] for d in sy_data]),
                         ("세운 기준 운성", [d['growth'] for d in sy_data]),
+                        ("적용 신살", [d['sinsal'] for d in sy_data]),
                         ("상호 관계", [d['interaction'] for d in sy_data])
                     ]
                     
