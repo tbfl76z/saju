@@ -139,19 +139,22 @@ def main():
         col1, col2 = st.columns(2)
         with col1:
             name = st.text_input("이름 (선택)", placeholder="홍길동")
-            birth_date = st.date_input(
-                "생년월일", 
-                value=datetime.date(1990, 1, 1),
-                min_value=datetime.date(1900, 1, 1),
-                max_value=datetime.date(2100, 12, 31)
-            )
+            st.write("🗓️ 생년월일")
+            b_cols = st.columns([2, 1, 1])
+            with b_cols[0]:
+                b_year = st.number_input("년", min_value=1900, max_value=2100, value=1990)
+            with b_cols[1]:
+                b_month = st.number_input("월", min_value=1, max_value=12, value=1)
+            with b_cols[2]:
+                b_day = st.number_input("일", min_value=1, max_value=31, value=1)
         with col2:
             gender = st.radio("성별", ["여", "남"], horizontal=True)
+            st.write("⏰ 태어난 시간")
             t_col1, t_col2 = st.columns(2)
             with t_col1:
-                b_hour = st.selectbox("태어난 시", range(24), index=0)
+                b_hour = st.number_input("시", min_value=0, max_value=23, value=0)
             with t_col2:
-                b_minute = st.selectbox("태어난 분", range(60), index=0)
+                b_minute = st.number_input("분", min_value=0, max_value=59, value=0)
             
         col3, col4 = st.columns(2)
         with col3:
@@ -161,11 +164,12 @@ def main():
 
     if st.button("사주 명식 계산하기"):
         try:
+            # 날짜 유효성 체크 및 객체 생성
+            birth_date = datetime.date(b_year, b_month, b_day)
+            
             # 사주 계산 (라이브러리 내 태양시 보정 및 23:30 경계 설정 사용)
-            # use_solar_time=True, longitude=127.5 (동경 표준시 대비 30분 보정)
-            # early_zi_time=False (23시부터 다음날로 처리하는 자시 기준 - 23:30 보정 시 정확히 한국 기준)
             saju_res = calculate_saju(
-                birth_date.year, birth_date.month, birth_date.day, 
+                b_year, b_month, b_day, 
                 b_hour, b_minute,
                 use_solar_time=True, 
                 longitude=127.5,
@@ -173,10 +177,9 @@ def main():
             )
             details = get_saju_details(saju_res)
             
-            # 음력일 경우 보정된 양력으로 재계산 (디테일 갱신 필요 시)
+            # 음력일 경우 보정된 양력으로 재계산
             if calendar_type == "음력":
-                # sajupy는 내부적으로 양력 데이터를 사용하므로 음력->양력 변환 후 재계산
-                solar_res = lunar_to_solar(birth_date.year, birth_date.month, birth_date.day, is_leap_month=is_leap)
+                solar_res = lunar_to_solar(b_year, b_month, b_day, is_leap_month=is_leap)
                 y, m, d = solar_res['solar_year'], solar_res['solar_month'], solar_res['solar_day']
                 saju_res = calculate_saju(y, m, d, b_hour, b_minute, 
                                         use_solar_time=True, longitude=127.5, early_zi_time=False)
