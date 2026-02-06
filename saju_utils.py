@@ -10,17 +10,15 @@ from datetime import datetime
 HEAVENLY_STEMS = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸']
 EARTHLY_BRANCHES = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥']
 
-# 60갑자 리스트
+# 60갑자 리스트 (오타 완전 수정 및 리터럴 정화)
 GANZHI_LIST = [
     '甲子', '乙丑', '丙寅', '丁卯', '戊辰', '己巳', '庚午', '辛未', '壬申', '癸酉',
     '甲戌', '乙亥', '丙子', '丁丑', '戊寅', '己卯', '庚辰', '辛巳', '壬午', '癸未',
     '甲申', '乙酉', '丙戌', '丁亥', '戊子', '己丑', '庚寅', '辛卯', '壬辰', '癸巳',
-    '甲午', '乙未', '丙申', '丁酉', '戊戌', '己亥', '庚자', '辛丑', '壬寅', '癸卯',
-    '甲辰', '乙巳', '丙午', '丁未', '戊申', '己酉', '庚戌', '辛亥', '壬자', '癸丑',
+    '甲午', '乙未', '丙申', '丁酉', '戊戌', '己亥', '庚子', '辛丑', '壬寅', '癸卯',
+    '甲辰', '乙巳', '丙午', '丁未', '戊申', '己酉', '庚戌', '辛亥', '壬子', '癸丑',
     '甲寅', '乙卯', '丙辰', '丁巳', '戊午', '己未', '庚申', '辛酉', '壬戌', '癸亥'
 ]
-GANZHI_LIST[36] = '庚子'
-GANZHI_LIST[48] = '壬子'
 
 # 오행 매핑
 ELEMENTS_MAP = {
@@ -90,7 +88,7 @@ def get_prev_ganzhi(ganzhi, step=1):
     return GANZHI_LIST[(idx - step) % 60]
 
 def calculate_daeun_number(year, month, day, hour, minute, is_forward):
-    """대운수 계산"""
+    """대운수 계산 (전통 정밀 보정 방식)"""
     try:
         from sajupy import get_saju_calculator
         calc = get_saju_calculator()
@@ -109,22 +107,13 @@ def calculate_daeun_number(year, month, day, hour, minute, is_forward):
             target_term = past_terms.iloc[-1]['term_dt']
             
         diff_seconds = abs((target_term - birth_dt).total_seconds())
-        daeun_num = round(diff_seconds / (24 * 3600) / 3)
+        # 소수점 0.5 이상이면 올림 처리 (int(val + 0.5))
+        daeun_num = int((diff_seconds / (24 * 3600) / 3) + 0.5)
         return max(1, daeun_num)
     except: return 1
 
 def get_sinsal(year_branch, branch):
-    """지지 기반 12신살 산출 (기준: 년지)"""
-    # 삼합 그룹 설정
-    group = {
-        '寅': '申', '午': '申', '戌': '申', # 인오술 -> 신(지살)
-        '申': '寅', '子': '寅', '辰': '寅', # 신자진 -> 인(지살)
-        '巳': '亥', '酉': '亥', '丑': '亥', # 사유축 -> 해(지살)
-        '亥': '巳', '卯': '巳', '未': '巳'  # 해묘미 -> 사(지살)
-    }
-    # 실제로는 년지가 속한 삼합 그룹의 '생지'가 지살의 시작점임
-    # 예: 년지가 寅/午/戌 이면, '寅'이 지살(0), '卯'가 년살(1)...
-    # 여기서는 간단히 그룹 시작점(지살)을 찾아서 계산
+    """지지 기반 12신살 산출 (기준: 년지 삼합 생지)"""
     groups_start = {
         '寅':'寅', '午':'寅', '戌':'寅',
         '申':'申', '子':'申', '辰':'申',
@@ -138,26 +127,23 @@ def get_sinsal(year_branch, branch):
 
 def get_ganzhi_details(day_gan, year_branch, ganzhi, pillars=None):
     """특정 간지의 상세 명리 데이터 산출"""
+    if not ganzhi or len(ganzhi) < 2: return {}
     stem, branch = ganzhi[0], ganzhi[1]
     
-    # 십성 및 십이운성
-    s_ten = GAN_TEN_GODS[day_gan].get(stem, '-')
-    b_ten = GAN_TEN_GODS[day_gan].get(BRANCH_HIDDEN_GANS.get(branch), '-')
-    growth = TWELVE_GROWTH[day_gan].get(branch, '-')
-    
-    # 신살
+    s_ten = GAN_TEN_GODS.get(day_gan, {}).get(stem, '-')
+    b_ten = GAN_TEN_GODS.get(day_gan, {}).get(BRANCH_HIDDEN_GANS.get(branch), '-')
+    growth = TWELVE_GROWTH.get(day_gan, {}).get(branch, '-')
     sinsal = get_sinsal(year_branch, branch)
     
-    # 원국과의 관계
     rels = []
     if pillars:
         p_map = {'year':'년', 'month':'월', 'day':'일', 'hour':'시'}
         for k, p in pillars.items():
             name = p_map.get(k, k)
-            if STEM_RELATIONS['충'].get(stem) == p['stem']: rels.append(f"{name}충")
-            if STEM_RELATIONS['합'].get(stem) == p['stem']: rels.append(f"{name}합")
-            if BRANCH_RELATIONS['충'].get(branch) == p['branch']: rels.append(f"{name}충")
-            if BRANCH_RELATIONS['합'].get(branch) == p['branch']: rels.append(f"{name}합")
+            if STEM_RELATIONS['충'].get(stem) == p.get('stem'): rels.append(f"{name}충")
+            if STEM_RELATIONS['합'].get(stem) == p.get('stem'): rels.append(f"{name}합")
+            if BRANCH_RELATIONS['충'].get(branch) == p.get('branch'): rels.append(f"{name}충")
+            if BRANCH_RELATIONS['합'].get(branch) == p.get('branch'): rels.append(f"{name}합")
             
     return {
         'ganzhi': ganzhi,
@@ -170,75 +156,86 @@ def get_ganzhi_details(day_gan, year_branch, ganzhi, pillars=None):
 
 def calculate_daeun(details, gender):
     """대운 산출"""
-    pillars = details['pillars']
-    year_stem, year_branch = pillars['year']['stem'], pillars['year']['branch']
-    month_pillar, day_gan = pillars['month']['pillar'], pillars['day']['stem']
-    
-    is_yang = year_stem in ['甲', '丙', '戊', '庚', '壬']
-    is_forward = (is_yang and gender == '남') or (not is_yang and gender == '여')
-    
-    y, m, d = map(int, details['birth_date'].split('-'))
-    hh, mm = map(int, details['birth_time'].split(':'))
-    daeun_num = calculate_daeun_number(y, m, d, hh, mm, is_forward)
-    
-    res_list = []
-    curr = month_pillar
-    for i in range(10):
-        curr = get_next_ganzhi(curr) if is_forward else get_prev_ganzhi(curr)
-        item = get_ganzhi_details(day_gan, year_branch, curr, pillars=pillars)
-        item['age'] = daeun_num + (i * 10)
-        res_list.append(item)
-    return {'num': daeun_num, 'list': res_list}
+    try:
+        pillars = details['pillars']
+        year_stem, year_branch = pillars['year']['stem'], pillars['year']['branch']
+        month_pillar, day_gan = pillars['month']['pillar'], pillars['day']['stem']
+        
+        is_yang = year_stem in ['甲', '丙', '戊', '庚', '壬']
+        is_forward = (is_yang and gender == '남') or (not is_yang and gender == '여')
+        
+        y, m, d = map(int, details['birth_date'].split('-'))
+        hh, mm = map(int, details['birth_time'].split(':'))
+        daeun_num = calculate_daeun_number(y, m, d, hh, mm, is_forward)
+        
+        res_list = []
+        curr = month_pillar
+        for i in range(10):
+            curr = get_next_ganzhi(curr) if is_forward else get_prev_ganzhi(curr)
+            item = get_ganzhi_details(day_gan, year_branch, curr, pillars=pillars)
+            item['age'] = daeun_num + (i * 10)
+            res_list.append(item)
+        return {'num': daeun_num, 'list': res_list}
+    except:
+        return {'num': 1, 'list': []}
 
 def get_seyun_data(day_gan, year_branch, target_year, pillars=None):
-    """세운 산출"""
+    """세운 산출 (안전 관리 방식)"""
     try:
         from sajupy import get_saju_calculator
         calc = get_saju_calculator()
-        res = calc.calculate_saju(target_year, 2, 15, 12, 0)
-        return get_ganzhi_details(day_gan, year_branch, res['year_pillar'], pillars=pillars)
-    except: return {}
+        res = calc.calculate_saju(int(target_year), 2, 15, 12, 0)
+        return get_ganzhi_details(day_gan, year_branch, res.get('year_pillar'), pillars=pillars)
+    except:
+        return {}
 
 def get_wolun_data(day_gan, year_branch, year_pillar, target_month, pillars=None):
     """월운 산출"""
-    y_stem = year_pillar[0]
-    m_map = {'甲': 2, '己': 2, '乙': 4, '庚': 4, '丙': 6, '辛': 6, '丁': 8, '壬': 8, '戊': 0, '癸': 0}
-    s_idx = (m_map.get(y_stem, 0) + target_month - 1) % 10
-    b_idx = (target_month + 1) % 12
-    pillar = HEAVENLY_STEMS[s_idx] + EARTHLY_BRANCHES[b_idx]
-    res = get_ganzhi_details(day_gan, year_branch, pillar, pillars=pillars)
-    res['month'] = target_month
-    return res
+    if not year_pillar: return {}
+    try:
+        y_stem = year_pillar[0]
+        m_map = {'甲': 2, '己': 2, '乙': 4, '庚': 4, '丙': 6, '辛': 6, '丁': 8, '壬': 8, '戊': 0, '癸': 0}
+        s_idx = (m_map.get(y_stem, 0) + int(target_month) - 1) % 10
+        b_idx = (int(target_month) + 1) % 12
+        pillar = HEAVENLY_STEMS[s_idx] + EARTHLY_BRANCHES[b_idx]
+        res = get_ganzhi_details(day_gan, year_branch, pillar, pillars=pillars)
+        res['month'] = target_month
+        return res
+    except:
+        return {}
 
 def get_extended_saju_data(details, gender='여'):
-    """전체 데이터 통합"""
-    pillars = details['pillars']
-    day_gan, year_branch = pillars['day']['stem'], pillars['year']['branch']
-    
-    details['ten_gods'] = {p: GAN_TEN_GODS[day_gan].get(pillars[p]['stem'], '-') for p in ['year', 'month', 'hour']}
-    details['ten_gods']['day'] = '본인'
-    details['jiji_ten_gods'] = {p: GAN_TEN_GODS[day_gan].get(BRANCH_HIDDEN_GANS.get(pillars[p]['branch']), '-') for p in ['year', 'month', 'day', 'hour']}
-    details['twelve_growth'] = {p: TWELVE_GROWTH[day_gan].get(pillars[p]['branch'], '-') for p in ['year', 'month', 'day', 'hour']}
-    
-    details['five_elements'] = {'목':0,'화':0,'토':0,'금':0,'수':0}
-    for p in ['year','month','day','hour']:
-        for k in [pillars[p]['stem'], pillars[p]['branch']]:
-            e = ELEMENTS_MAP.get(k)
-            if e: details['five_elements'][e] += 1
-            
-    details['sinsal'] = {p: get_sinsal(year_branch, pillars[p]['branch']) for p in ['year', 'month', 'day', 'hour']}
-    
-    rels = []
-    keys = ['year', 'month', 'day', 'hour']
-    names = {'year':'년', 'month':'월', 'day':'일', 'hour':'시'}
-    for i in range(4):
-        for j in range(i+1, 4):
-            s1, s2 = pillars[keys[i]]['stem'], pillars[keys[j]]['stem']
-            if STEM_RELATIONS['충'].get(s1) == s2: rels.append(f"{names[keys[i]]}-{names[keys[j]]} 충")
-            if STEM_RELATIONS['합'].get(s1) == s2: rels.append(f"{names[keys[i]]}-{names[keys[j]]} 합")
-            b1, b2 = pillars[keys[i]]['branch'], pillars[keys[j]]['branch']
-            if BRANCH_RELATIONS['충'].get(b1) == b2: rels.append(f"{names[keys[i]]}-{names[keys[j]]} 충")
-            if BRANCH_RELATIONS['합'].get(b1) == b2: rels.append(f"{names[keys[i]]}-{names[keys[j]]} 합")
-    details['relations'] = rels
-    details['fortune'] = calculate_daeun(details, gender)
-    return details
+    """전체 데이터 통합 및 확장"""
+    try:
+        pillars = details['pillars']
+        day_gan, year_branch = pillars['day']['stem'], pillars['year']['branch']
+        
+        details['ten_gods'] = {p: GAN_TEN_GODS.get(day_gan, {}).get(pillars[p]['stem'], '-') for p in ['year', 'month', 'hour']}
+        details['ten_gods']['day'] = '본인'
+        details['jiji_ten_gods'] = {p: GAN_TEN_GODS.get(day_gan, {}).get(BRANCH_HIDDEN_GANS.get(pillars[p]['branch']), '-') for p in ['year', 'month', 'day', 'hour']}
+        details['twelve_growth'] = {p: TWELVE_GROWTH.get(day_gan, {}).get(pillars[p]['branch'], '-') for p in ['year', 'month', 'day', 'hour']}
+        
+        details['five_elements'] = {'목':0,'화':0,'토':0,'금':0,'수':0}
+        for p in ['year','month','day','hour']:
+            for k in [pillars[p]['stem'], pillars[p]['branch']]:
+                e = ELEMENTS_MAP.get(k)
+                if e: details['five_elements'][e] += 1
+                
+        details['sinsal'] = {p: get_sinsal(year_branch, pillars[p]['branch']) for p in ['year', 'month', 'day', 'hour']}
+        
+        rels = []
+        keys = ['year', 'month', 'day', 'hour']
+        names = {'year':'년', 'month':'월', 'day':'일', 'hour':'시'}
+        for i in range(4):
+            for j in range(i+1, 4):
+                s1, s2 = pillars[keys[i]].get('stem'), pillars[keys[j]].get('stem')
+                if STEM_RELATIONS['충'].get(s1) == s2: rels.append(f"{names[keys[i]]}-{names[keys[j]]} 충")
+                if STEM_RELATIONS['합'].get(s1) == s2: rels.append(f"{names[keys[i]]}-{names[keys[j]]} 합")
+                b1, b2 = pillars[keys[i]].get('branch'), pillars[keys[j]].get('branch')
+                if BRANCH_RELATIONS['충'].get(b1) == b2: rels.append(f"{names[keys[i]]}-{names[keys[j]]} 충")
+                if BRANCH_RELATIONS['합'].get(b1) == b2: rels.append(f"{names[keys[i]]}-{names[keys[j]]} 합")
+        details['relations'] = rels
+        details['fortune'] = calculate_daeun(details, gender)
+        return details
+    except:
+        return details

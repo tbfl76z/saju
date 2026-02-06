@@ -251,9 +251,15 @@ def main():
 
         # 세운(Seyun) 시각화
         from saju_utils import get_seyun_data
-        cur_year = datetime.datetime.now().year
-        seyun = get_seyun_data(pillars['day']['stem'], pillars['year']['branch'], cur_year, pillars=pillars)
-        if seyun:
+        try:
+            cur_year = datetime.datetime.now().year
+            seyun = get_seyun_data(pillars.get('day', {}).get('stem', '甲'), 
+                                 pillars.get('year', {}).get('branch', '子'), 
+                                 cur_year, pillars=pillars)
+        except:
+            seyun = {}
+
+        if seyun and seyun.get('ganzhi'):
             st.subheader(f"✨ {cur_year}년 올해의 운세")
             st.markdown(f"""
             <div style='display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; padding:20px; background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%); border-radius:15px; text-align:center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
