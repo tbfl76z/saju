@@ -188,8 +188,23 @@ def main():
             st.session_state['saju_data'] = details
             st.session_state['target_name'] = name
             st.session_state['target_gender'] = gender
+            # 초기 선택 상태 설정 (현재 대운 및 현재 연도)
+            birth_year = int(details.get('birth_date', '1990-01-01').split('-')[0])
+            now_year = datetime.datetime.now().year
+            korean_age = now_year - birth_year + 1
+            
+            # 현재 나이에 해당하는 대운 찾기
+            cur_daeun_age = details['fortune']['num']
+            for d in details['fortune']['list']:
+                if d['age'] <= korean_age < d['age'] + 10:
+                    cur_daeun_age = d['age']
+                    break
+            
+            st.session_state['selected_daeun_age'] = cur_daeun_age
+            st.session_state['selected_seyun_year'] = now_year
+            
             # 데이터 버전 관리용 플래그
-            st.session_state['data_version'] = "v2"
+            st.session_state['data_version'] = "v3"
             st.success("사주 명식이 정확하게 계산되었습니다.")
         except Exception as e:
             st.error(f"계산 중 오류 발생: {str(e)}")
@@ -244,9 +259,14 @@ def main():
             chunk = df_list[i:i+4]
             for idx, item in enumerate(chunk):
                 with cols[idx]:
+                    age_val = item.get('age', 0)
+                    is_sel_daeun = st.session_state.get('selected_daeun_age') == age_val
+                    border_css = "3px solid #d4af37" if is_sel_daeun else "1px solid #e0e0e0"
+                    bg_css = "#fffcf0" if is_sel_daeun else "#ffffff"
+                    
                     st.markdown(f"""
-                    <div style='border:1px solid #e0e0e0; padding:12px; border-radius:12px; text-align:center; background-color:#ffffff; margin-bottom:15px; box-shadow: 2px 2px 5px rgba(0,0,0,0.05);'>
-                        <div style='font-size:0.9rem; font-weight:bold; color:#ff9800;'>{item.get('age', '-')}세~</div>
+                    <div style='border:{border_css}; padding:12px; border-radius:12px; text-align:center; background-color:{bg_css}; margin-bottom:5px; box-shadow: 2px 2px 5px rgba(0,0,0,0.05);'>
+                        <div style='font-size:0.9rem; font-weight:bold; color:#ff9800;'>{age_val}세~</div>
                         <div style='font-size:1.6rem; font-weight:bold; color:#2c3e50; margin:5px 0;'>{item.get('ganzhi', '-')}</div>
                         <div style='font-size:0.85rem; color:#d32f2f;'>{item.get('stem_ten_god', '-')} | {item.get('branch_ten_god', '-')}</div>
                         <div style='font-size:0.8rem; color:#1976d2;'>{item.get('twelve_growth', '-')}</div>
@@ -254,23 +274,30 @@ def main():
                         <div style='font-size:0.7rem; color:#7b1fa2;'>🔗 {item.get('relations', '-')}</div>
                     </div>
                     """, unsafe_allow_html=True)
+                    if st.button(f"{age_val}세 대운 선택", key=f"btn_daeun_{age_val}"):
+                        st.session_state['selected_daeun_age'] = age_val
+                        # 대운이 바뀌면 해당 대운의 시작 연도로 세운 선택값도 초기화
+                        birth_year = int(data.get('birth_date', '1990-01-01').split('-')[0])
+                        st.session_state['selected_seyun_year'] = birth_year + age_val - 1
+                        st.rerun()
 
         # 세운(Seyun) 시각화 - 10년치 전체 그리드
         from saju_utils import get_seyun_list
         try:
-            # 현재 대운 기간의 시작 연도 계산
             birth_year = int(data.get('birth_date', '1990-01-01').split('-')[0])
-            # 현재 나이에 해당하는 대운 찾기
-            korean_age = now_year - birth_year + 1
-            
-            # 현재 나이가 포함된 대운의 시작 나이 찾기
-            current_daeun_age = data['fortune']['num']
-            for d in data['fortune']['list']:
-                if d['age'] <= korean_age < d['age'] + 10:
-                    current_daeun_age = d['age']
-                    break
-            
-            seyun_start_year = birth_year + current_daeun_age - 1
+            # 선택된 대운 연령 기준 또는 현재 대운 기준
+            selected_daeun_age = st.session_state.get('selected_daeun_age')
+            if selected_daeun_age is None:
+                # 현재 나이에 해당하는 대운 찾기
+                korean_age = now_year - birth_year + 1
+                selected_daeun_age = data['fortune']['num']
+                for d in data['fortune']['list']:
+                    if d['age'] <= korean_age < d['age'] + 10:
+                        selected_daeun_age = d['age']
+                        break
+                st.session_state['selected_daeun_age'] = selected_daeun_age
+
+            seyun_start_year = birth_year + selected_daeun_age - 1
             seyun_list = get_seyun_list(pillars.get('day', {}).get('stem', '甲'), 
                                       pillars.get('year', {}).get('branch', '子'), 
                                       seyun_start_year, count=10, pillars=pillars,
@@ -284,13 +311,17 @@ def main():
                 s_cols = st.columns(5)
                 chunk = seyun_list[i:i+5]
                 for idx, s_item in enumerate(chunk):
-                    is_current = s_item['year'] == now_year
-                    border_color = "#d63384" if is_current else "#e0e0e0"
-                    bg_color = "#fff0f6" if is_current else "#ffffff"
+                    s_year = s_item['year']
+                    is_sel_year = st.session_state.get('selected_seyun_year') == s_year
+                    is_now = s_year == now_year
+                    
+                    border_color = "#d63384" if is_sel_year else ("#ffc107" if is_now else "#e0e0e0")
+                    bg_color = "#fff0f6" if is_sel_year else ("#fffdf0" if is_now else "#ffffff")
+                    
                     with s_cols[idx]:
                         st.markdown(f"""
-                        <div style='border:2px solid {border_color}; padding:10px; border-radius:12px; text-align:center; background-color:{bg_color}; margin-bottom:10px; min-height:180px;'>
-                            <div style='font-size:0.8rem; font-weight:bold; color:#666;'>{s_item['year']}년</div>
+                        <div style='border:2px solid {border_color}; padding:10px; border-radius:12px; text-align:center; background-color:{bg_color}; margin-bottom:5px; min-height:180px;'>
+                            <div style='font-size:0.8rem; font-weight:bold; color:#666;'>{s_year}년 {"(현재)" if is_now else ""}</div>
                             <div style='font-size:1.4rem; font-weight:bold; color:{border_color}; margin:3px 0;'>{s_item['ganzhi']}</div>
                             <div style='font-size:0.8rem; color:#d32f2f;'>{s_item['stem_ten_god']} | {s_item['branch_ten_god']}</div>
                             <div style='font-size:0.75rem; color:#1976d2;'>{s_item['twelve_growth']}</div>
@@ -298,13 +329,17 @@ def main():
                             <div style='font-size:0.65rem; color:#7b1fa2;'>🔗 {s_item['relations']}</div>
                         </div>
                         """, unsafe_allow_html=True)
+                        if st.button(f"{s_year}년 선택", key=f"btn_year_{s_year}"):
+                            st.session_state['selected_seyun_year'] = s_year
+                            st.rerun()
 
-            # 월운(Wolun) 시각화 - 현재 연도 기준
+            # 월운(Wolun) 시각화 - 선택된 연도 기준
             from saju_utils import get_wolun_data
-            st.subheader(f"📅 {now_year}년 월별 운세 흐름")
+            sel_year = st.session_state.get('selected_seyun_year', now_year)
+            st.subheader(f"📅 {sel_year}년 월별 운세 흐름")
             
-            # 현재 연도 세운 찾기
-            cur_seyun = next((s for s in seyun_list if s['year'] == now_year), seyun_list[0] if seyun_list else {})
+            # 선택된 연도 세운 정보 찾기
+            cur_seyun = next((s for s in seyun_list if s['year'] == sel_year), seyun_list[0] if seyun_list else {})
             
             w_cols = st.columns(4)
             for m in range(1, 13):
@@ -337,18 +372,22 @@ def main():
             model = initialize_saju_engine(api_key)
             with st.status("대가의 식견으로 당신의 운명을 통찰하는 중...", expanded=True) as status:
                 try:
-                    name_str = st.session_state.get('target_name', '사용자')
-                    gender_str = st.session_state.get('target_gender', '여')
+                    selected_daeun_info = next((d for d in data['fortune']['list'] if d['age'] == st.session_state.get('selected_daeun_age')), data['fortune']['list'][0])
+                    
                     saju_summary = f"""
-                    [대상자] {name_str} ({gender_str})
+                    [대상자] {name_str} ({gender_str}), 현재 나이: {now_year - int(data['birth_date'].split('-')[0]) + 1}세
                     [양력 생일] {data['birth_date']} {data['birth_time']}
                     [사주 4주] 연:{pillars['year']['pillar']}, 월:{pillars['month']['pillar']}, 일:{pillars['day']['pillar']}, 시:{pillars['hour']['pillar']}
                     [오행분포] {elems}
                     [공망] 년:{data['gongmang']['year']}, 일:{data['gongmang']['day']}
                     [신살 및 관계] {data['sinsal']}, {data['relations']}
-                    [대운 정보] 대운수 {data['fortune']['num']}, 전체 리스트: {data['fortune']['list']}
-                    [현재 세운] {now_year}년 ({cur_seyun['ganzhi'] if cur_seyun else 'N/A'})
-                    [월운 예시] {now_year}년 1~12월 흐름 가용함
+                    
+                    [핵심 분석 대상 - 임의 선택 또는 현재 대운] {selected_daeun_info['age']}세 대운 ({selected_daeun_info['ganzhi']})
+                    [현재 분석 기준 연도] {sel_year}년 ({cur_seyun['ganzhi'] if cur_seyun else 'N/A'})
+                    
+                    **분석 가이드:**
+                    1. 과거 대운보다는 **현재 나이({now_year - int(data['birth_date'].split('-')[0]) + 1}세)**와 **현재 진행 중인 대운({selected_daeun_info['ganzhi']})**의 관계를 최우선적으로 해석하십시오.
+                    2. 특히 선택된 분석 기준 연도({sel_year}년)의 세운과 월별 흐름이 사용자의 인생 여정에서 어떤 의미를 갖는지 구체적으로 조언하십시오.
                     """
                     
                     prompt = f"""
