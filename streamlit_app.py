@@ -439,6 +439,85 @@ def main():
                             st.session_state['selected_seyun_year'] = s_year
                             st.rerun()
 
+            # --- 세운 상세 상호작용 분석 섹션 (NEW) ---
+            if 'selected_seyun_year' in st.session_state:
+                sel_year = st.session_state['selected_seyun_year']
+                sel_seyun = next((s for s in seyun_list if s['year'] == sel_year), None)
+                sel_daeun_age = st.session_state.get('selected_daeun_age')
+                sel_daeun = next((d for d in data['fortune']['list'] if d['age'] == sel_daeun_age), None)
+                
+                if sel_seyun:
+                    st.markdown(f"### 🔍 {sel_year}년 세운({sel_seyun['ganzhi']}) 상세 분석")
+                    st.info(f"선택하신 세운이 원국(4주) 및 현재 대운({sel_daeun['ganzhi'] if sel_daeun else '-'})과 맺는 복합 상호작용을 풀이합니다.")
+                    
+                    # 관계 산출 함수 (세운 기준)
+                    def get_seyun_relation(target_pillar_val, target_name):
+                        if not target_pillar_val or len(target_pillar_val) < 2: return {}
+                        s_ganzhi = sel_seyun['ganzhi']
+                        s_stem, s_branch = s_ganzhi[0], s_ganzhi[1]
+                        t_stem, t_branch = target_pillar_val[0], target_pillar_val[1]
+                        
+                        from saju_utils import GAN_TEN_GODS, TWELVE_GROWTH, STEM_RELATIONS, BRANCH_RELATIONS
+                        day_gan = pillars['day']['stem']
+                        
+                        rels = []
+                        if STEM_RELATIONS['충'].get(s_stem) == t_stem: rels.append("충(沖)")
+                        if STEM_RELATIONS['합'].get(s_stem) == t_stem: rels.append("합(合)")
+                        if BRANCH_RELATIONS['충'].get(s_branch) == t_branch: rels.append("충(沖)")
+                        if BRANCH_RELATIONS['합'].get(s_branch) == t_branch: rels.append("합(合)")
+                        
+                        h_val = BRANCH_RELATIONS['형'].get(s_branch)
+                        if h_val:
+                            if isinstance(h_val, list):
+                                if t_branch in h_val: rels.append("형(刑)")
+                            elif h_val == t_branch: rels.append("형(刑)")
+                        
+                        if BRANCH_RELATIONS['파'].get(s_branch) == t_branch: rels.append("파(破)")
+                        if BRANCH_RELATIONS['해'].get(s_branch) == t_branch: rels.append("해(害)")
+                        
+                        return {
+                            "name": target_name,
+                            "ganzhi": target_pillar_val,
+                            "ten_god": GAN_TEN_GODS.get(day_gan, {}).get(t_stem, '-'),
+                            "growth": TWELVE_GROWTH.get(s_stem, {}).get(t_branch, '-'),
+                            "interaction": ", ".join(rels) if rels else "평온"
+                        }
+
+                    # 분석 대상 설정: 4주 원국 + 대운
+                    targets = [
+                        ('hour', pillars['hour']['pillar'], "시주"),
+                        ('day', pillars['day']['pillar'], "일주"),
+                        ('month', pillars['month']['pillar'], "월주"),
+                        ('year', pillars['year']['pillar'], "연주"),
+                        ('daeun', sel_daeun['ganzhi'] if sel_daeun else None, "대운")
+                    ]
+                    
+                    sy_data = [get_seyun_relation(t[1], t[2]) for t in targets if t[1]]
+                    
+                    # 5-6열 테이블 (항목 + 분석 대상 수만큼)
+                    num_cols = len(sy_data) + 1
+                    syc_cols = st.columns(num_cols)
+                    
+                    syc_labels = ["분석 항목"] + [d['name'] for d in sy_data]
+                    for i, l in enumerate(syc_labels):
+                        syc_cols[i].markdown(f"<div style='text-align:center; font-weight:bold; background-color:#fff0f6; padding:8px; border-radius:5px; font-size:0.85rem;'>{l}</div>", unsafe_allow_html=True)
+                    
+                    sy_row_items = [
+                        ("대상 간지", [d['ganzhi'] for d in sy_data]),
+                        ("대상 십성", [d['ten_god'] for d in sy_data]),
+                        ("세운 기준 운성", [d['growth'] for d in sy_data]),
+                        ("상호 관계", [d['interaction'] for d in sy_data])
+                    ]
+                    
+                    for label, vals in sy_row_items:
+                        r_cols = st.columns(num_cols)
+                        r_cols[0].markdown(f"<div style='text-align:center; padding:10px; font-weight:700; color:#444; border-bottom:1px solid #eee; font-size:0.8rem;'>{label}</div>", unsafe_allow_html=True)
+                        for c_idx, val in enumerate(vals):
+                            color = "#d63384" if any(x in val for x in ["충", "형", "파", "해"]) else ("#198754" if "합" in val else "#333")
+                            r_cols[c_idx+1].markdown(f"<div style='text-align:center; padding:10px; font-size:0.9rem; color:{color}; border-bottom:1px solid #eee;'>{val}</div>", unsafe_allow_html=True)
+                    
+                    st.markdown("---")
+
             # 월운(Wolun) 시각화 - 선택된 연도 기준
             from saju_utils import get_wolun_data
             sel_year = st.session_state.get('selected_seyun_year', now_year)
