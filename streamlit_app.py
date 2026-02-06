@@ -120,7 +120,18 @@ def main():
     if not os.path.exists("data"):
         os.makedirs("data", exist_ok=True)
         
-    st.title("Destiny Code")
+    # 제목 및 로고 배치
+    t_col1, t_col2 = st.columns([1, 4])
+    with t_col1:
+        st.write("") # 간격 조절용
+        # 로고 경로를 스크립트 상대 경로로 설정하여 배포 환경 호환성 확보
+        logo_path = os.path.join(os.path.dirname(__file__), "logo.png")
+        if os.path.exists(logo_path):
+            st.image(logo_path, width=80)
+        else:
+            st.write("🔮") # 로고 파일이 없을 경우의 예비 아이콘
+    with t_col2:
+        st.title("Destiny Code")
     st.markdown("<h3 style='text-align: center; opacity: 0.8;'>Your Life, Written in Code.</h3>", unsafe_allow_html=True)
     st.divider()
 
@@ -382,8 +393,8 @@ def main():
                     r_cols = st.columns(5)
                     r_cols[0].markdown(f"<div style='text-align:center; padding:12px; font-weight:700; color:#444; border-bottom:1px solid #eee;'>{label}</div>", unsafe_allow_html=True)
                     for c_idx, val in enumerate(vals):
-                        color = "#d63384" if any(x in val for x in ["충", "형", "파", "해"]) else ("#198754" if "합" in val else "#333")
-                        r_cols[c_idx+1].markdown(f"<div style='text-align:center; padding:12px; font-size:1rem; color:{color}; border-bottom:1px solid #eee;'>{val}</div>", unsafe_allow_html=True)
+                        with r_cols[c_idx+1]:
+                            term_popover(label, val, f"daeun_{label}_{c_idx}")
                 
                 st.markdown("---")
 
@@ -513,8 +524,8 @@ def main():
                         r_cols = st.columns(num_cols)
                         r_cols[0].markdown(f"<div style='text-align:center; padding:10px; font-weight:700; color:#444; border-bottom:1px solid #eee; font-size:0.8rem;'>{label}</div>", unsafe_allow_html=True)
                         for c_idx, val in enumerate(vals):
-                            color = "#d63384" if any(x in val for x in ["충", "형", "파", "해"]) else ("#198754" if "합" in val else "#333")
-                            r_cols[c_idx+1].markdown(f"<div style='text-align:center; padding:10px; font-size:0.9rem; color:{color}; border-bottom:1px solid #eee;'>{val}</div>", unsafe_allow_html=True)
+                            with r_cols[c_idx+1]:
+                                term_popover(label, val, f"seyun_{label}_{c_idx}")
                     
                     st.markdown("---")
 
