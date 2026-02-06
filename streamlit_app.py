@@ -317,6 +317,76 @@ def main():
                         st.session_state['selected_seyun_year'] = birth_year + age_val - 1
                         st.rerun()
 
+        # --- 대운 상세 상호작용 분석 섹션 (NEW) ---
+        if 'selected_daeun_age' in st.session_state:
+            sel_age = st.session_state['selected_daeun_age']
+            sel_daeun = next((d for d in data['fortune']['list'] if d['age'] == sel_age), None)
+            
+            if sel_daeun:
+                st.markdown(f"### 🔍 {sel_age}세 대운({sel_daeun['ganzhi']}) 상세 분석")
+                st.info(f"선택하신 대운이 원국의 각 기둥(연,월,일,시)과 맺는 명리적 상호작용을 항목별로 풀이합니다.")
+                
+                # 상세 관계 데이터 재산출 (각 기둥별로 개별 관계 추출)
+                def get_pillar_relation(pillar_key):
+                    p = pillars[pillar_key]
+                    name = {'year':'년', 'month':'월', 'day':'일', 'hour':'시'}[pillar_key]
+                    d_ganzhi = sel_daeun['ganzhi']
+                    if not d_ganzhi or len(d_ganzhi) < 2: return {}
+                    d_stem, d_branch = d_ganzhi[0], d_ganzhi[1]
+                    p_stem, p_branch = p['stem'], p['branch']
+                    
+                    # 십성 (대운 -> 원국 기준)
+                    from saju_utils import GAN_TEN_GODS, BRANCH_HIDDEN_GANS, TWELVE_GROWTH, STEM_RELATIONS, BRANCH_RELATIONS
+                    day_gan = pillars['day']['stem']
+                    
+                    # 관계 산출
+                    rels = []
+                    if STEM_RELATIONS['충'].get(d_stem) == p_stem: rels.append("충(沖)")
+                    if STEM_RELATIONS['합'].get(d_stem) == p_stem: rels.append("합(合)")
+                    if BRANCH_RELATIONS['충'].get(d_branch) == p_branch: rels.append("충(沖)")
+                    if BRANCH_RELATIONS['합'].get(d_branch) == p_branch: rels.append("합(合)")
+                    
+                    h_val = BRANCH_RELATIONS['형'].get(d_branch)
+                    if h_val:
+                        if isinstance(h_val, list):
+                            if p_branch in h_val: rels.append("형(刑)")
+                        elif h_val == p_branch: rels.append("형(刑)")
+                    
+                    if BRANCH_RELATIONS['파'].get(d_branch) == p_branch: rels.append("파(破)")
+                    if BRANCH_RELATIONS['해'].get(d_branch) == p_branch: rels.append("해(害)")
+                    
+                    return {
+                        "ganzhi": p['pillar'],
+                        "ten_god": GAN_TEN_GODS.get(day_gan, {}).get(p_stem, '-'),
+                        "growth": TWELVE_GROWTH.get(d_stem, {}).get(p_branch, '-'), # 대운 천간 기준 원국 지지 운성
+                        "interaction": ", ".join(rels) if rels else "평온"
+                    }
+
+                # 시각화 표 구성
+                i_cols = st.columns(5)
+                labels = ["분석 항목", "시주(時)", "일주(日)", "월주(月)", "연주(년)"]
+                for i, l in enumerate(labels):
+                    i_cols[i].markdown(f"<div style='text-align:center; font-weight:bold; background-color:#f0f2f6; padding:8px; border-radius:5px;'>{l}</div>", unsafe_allow_html=True)
+                
+                p_keys = ['hour', 'day', 'month', 'year']
+                p_data = {k: get_pillar_relation(k) for k in p_keys}
+                
+                row_items = [
+                    ("원국 간지", [p_data[k]['ganzhi'] for k in p_keys]),
+                    ("해당 기둥 십성", [p_data[k]['ten_god'] for k in p_keys]),
+                    ("대운 기준 운성", [p_data[k]['growth'] for k in p_keys]),
+                    ("합·충·형·파·해", [p_data[k]['interaction'] for k in p_keys])
+                ]
+                
+                for label, vals in row_items:
+                    r_cols = st.columns(5)
+                    r_cols[0].markdown(f"<div style='text-align:center; padding:12px; font-weight:700; color:#444; border-bottom:1px solid #eee;'>{label}</div>", unsafe_allow_html=True)
+                    for c_idx, val in enumerate(vals):
+                        color = "#d63384" if any(x in val for x in ["충", "형", "파", "해"]) else ("#198754" if "합" in val else "#333")
+                        r_cols[c_idx+1].markdown(f"<div style='text-align:center; padding:12px; font-size:1rem; color:{color}; border-bottom:1px solid #eee;'>{val}</div>", unsafe_allow_html=True)
+                
+                st.markdown("---")
+
         # 세운(Seyun) 시각화 - 10년치 전체 그리드
         from saju_utils import get_seyun_list
         try:

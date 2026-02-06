@@ -75,6 +75,14 @@ STEM_RELATIONS = {
 BRANCH_RELATIONS = {
     '합': {'子':'丑', '丑':'子', '寅':'亥', '亥':'寅', '卯':'戌', '戌':'卯', '辰':'酉', '酉':'辰', '巳':'申', '申':'巳', '午':'未', '未':'午'},
     '충': {'子':'午', '午':'子', '丑':'未', '未':'丑', '寅':'申', '申':'寅', '卯':'酉', '酉':'卯', '辰':'戌', '戌':'辰', '巳':'亥', '亥':'巳'},
+    '형': {
+        '寅':['巳','申'], '巳':['申','寅'], '申':['寅','巳'], 
+        '丑':['戌','未'], '戌':['未','丑'], '未':['丑','戌'], 
+        '子':'卯', '卯':'子', 
+        '辰':'辰', '午':'午', '酉':'酉', '亥':'亥'
+    },
+    '파': {'子':'酉', '酉':'子', '丑':'辰', '辰':'丑', '寅':'亥', '亥':'寅', '卯':'午', '午':'卯', '巳':'申', '申':'巳', '未':'戌', '戌':'未'},
+    '해': {'子':'未', '未':'子', '丑':'午', '午':'丑', '寅':'巳', '巳':'寅', '卯':'辰', '辰':'卯', '申':'亥', '亥':'申', '酉':'戌', '戌':'酉'}
 }
 
 def get_ganzhi_index(ganzhi):
@@ -166,10 +174,29 @@ def get_ganzhi_details(day_gan, year_branch, ganzhi, pillars=None, day_branch=No
         p_map = {'year':'년', 'month':'월', 'day':'일', 'hour':'시'}
         for k, p in pillars.items():
             name = p_map.get(k, k)
-            if STEM_RELATIONS['충'].get(stem) == p.get('stem'): rels.append(f"{name}충")
-            if STEM_RELATIONS['합'].get(stem) == p['stem']: rels.append(f"{name}합")
-            if BRANCH_RELATIONS['충'].get(branch) == p.get('branch'): rels.append(f"{name}충")
-            if BRANCH_RELATIONS['합'].get(branch) == p.get('branch'): rels.append(f"{name}합")
+            p_stem = p.get('stem')
+            p_branch = p.get('branch')
+            
+            # 천간 관계
+            if STEM_RELATIONS['충'].get(stem) == p_stem: rels.append(f"{name}충")
+            if STEM_RELATIONS['합'].get(stem) == p_stem: rels.append(f"{name}합")
+            
+            # 지지 관계
+            if BRANCH_RELATIONS['충'].get(branch) == p_branch: rels.append(f"{name}충")
+            if BRANCH_RELATIONS['합'].get(branch) == p_branch: rels.append(f"{name}합")
+            
+            # 지지 형(刑)
+            h_val = BRANCH_RELATIONS['형'].get(branch)
+            if h_val:
+                if isinstance(h_val, list):
+                    if p_branch in h_val: rels.append(f"{name}형")
+                elif h_val == p_branch: rels.append(f"{name}형")
+                
+            # 지지 파(破)
+            if BRANCH_RELATIONS['파'].get(branch) == p_branch: rels.append(f"{name}파")
+            
+            # 지지 해(害)
+            if BRANCH_RELATIONS['해'].get(branch) == p_branch: rels.append(f"{name}해")
             
     return {
         'ganzhi': ganzhi,
