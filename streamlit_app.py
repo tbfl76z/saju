@@ -218,19 +218,52 @@ def main():
         pillars = data['pillars']
         
         st.subheader("🔮 사주 4주 명식")
-        # 테이블 시각화 (신살 및 지지십성 추가, 공망 반영)
-        html_table = f"""
-        <table class='saju-table'>
-            <tr><th>구분</th><th>시주(時)</th><th>일주(日)</th><th>월주(月)</th><th>연주(년)</th></tr>
-            <tr><td>천간</td><td class='pillar-cell'>{pillars['hour']['stem']}</td><td class='pillar-cell'>{pillars['day']['stem']}</td><td class='pillar-cell'>{pillars['month']['stem']}</td><td class='pillar-cell'>{pillars['year']['stem']}</td></tr>
-            <tr><td>지지</td><td class='pillar-cell'>{pillars['hour']['branch']}</td><td class='pillar-cell'>{pillars['day']['branch']}</td><td class='pillar-cell'>{pillars['month']['branch']}</td><td class='pillar-cell'>{pillars['year']['branch']}</td></tr>
-            <tr><td>십성</td><td class='ten-god'>{data['ten_gods']['hour']}</td><td class='ten-god'>{data['ten_gods']['day']}</td><td class='ten-god'>{data['ten_gods']['month']}</td><td class='ten-god'>{data['ten_gods']['year']}</td></tr>
-            <tr><td>지지십성</td><td>{data['jiji_ten_gods']['hour']}</td><td>{data['jiji_ten_gods']['day']}</td><td>{data['jiji_ten_gods']['month']}</td><td>{data['jiji_ten_gods']['year']}</td></tr>
-            <tr><td>12운성</td><td>{data['twelve_growth']['hour']}</td><td>{data['twelve_growth']['day']}</td><td>{data['twelve_growth']['month']}</td><td>{data['twelve_growth']['year']}</td></tr>
-            <tr><td>신살</td><td>{data['sinsal_details']['hour']['sinsal']}</td><td>{data['sinsal_details']['day']['sinsal']}</td><td>{data['sinsal_details']['month']['sinsal']}</td><td>{data['sinsal_details']['year']['sinsal']}</td></tr>
-        </table>
-        """
-        st.markdown(html_table, unsafe_allow_html=True)
+        from saju_data import SAJU_TERMS
+
+        def term_popover(label, value, key_suffix):
+            # 신살의 경우 ','로 구분된 여러 개일 수 있음
+            if not value or value == '-':
+                st.write("-")
+                return
+                
+            items = [v.strip() for v in value.split(',')]
+            
+            # 버튼 스타일을 흉내내거나 깔끔하게 표시
+            with st.popover(value, use_container_width=True):
+                for item in items:
+                    # '본인' 등 특수 용어 처리
+                    lookup_key = item
+                    if item == '인': # 본인 등의 처리 (필요시)
+                        lookup_key = '본인'
+                    
+                    desc = SAJU_TERMS.get(lookup_key, "상세 정보가 구축 중입니다.")
+                    st.markdown(f"**{item}**")
+                    st.caption(desc)
+                    if len(items) > 1:
+                        st.divider()
+
+        # 헤더
+        h_cols = st.columns(5)
+        headers = ["구분", "시주(時)", "일주(日)", "월주(月)", "연주(년)"]
+        for i, h in enumerate(headers):
+            h_cols[i].markdown(f"<div style='text-align:center; font-weight:bold; background-color:#f8f9fa; padding:5px; border-radius:5px;'>{h}</div>", unsafe_allow_html=True)
+
+        # 데이터 행 정의
+        rows = [
+            ("천간", [pillars['hour']['stem'], pillars['day']['stem'], pillars['month']['stem'], pillars['year']['stem']]),
+            ("지지", [pillars['hour']['branch'], pillars['day']['branch'], pillars['month']['branch'], pillars['year']['branch']]),
+            ("십성", [data['ten_gods']['hour'], data['ten_gods']['day'], data['ten_gods']['month'], data['ten_gods']['year']]),
+            ("지지십성", [data['jiji_ten_gods']['hour'], data['jiji_ten_gods']['day'], data['jiji_ten_gods']['month'], data['jiji_ten_gods']['year']]),
+            ("12운성", [data['twelve_growth']['hour'], data['twelve_growth']['day'], data['twelve_growth']['month'], data['twelve_growth']['year']]),
+            ("신살", [data['sinsal_details']['hour']['sinsal'], data['sinsal_details']['day']['sinsal'], data['sinsal_details']['month']['sinsal'], data['sinsal_details']['year']['sinsal']])
+        ]
+
+        for r_idx, (label, vals) in enumerate(rows):
+            r_cols = st.columns(5)
+            r_cols[0].markdown(f"<div style='text-align:center; padding:10px; font-size:0.9rem; color:#666;'>{label}</div>", unsafe_allow_html=True)
+            for c_idx, val in enumerate(vals):
+                with r_cols[c_idx+1]:
+                    term_popover(label, val, f"{r_idx}_{c_idx}")
         
         # 공망 및 지지 관계 표시
         col_g1, col_g2 = st.columns(2)
