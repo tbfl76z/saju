@@ -8,7 +8,7 @@ from sajupy import calculate_saju, get_saju_details, lunar_to_solar
 from saju_utils import get_extended_saju_data
 
 # 페이지 설정: 제목 및 아이콘
-st.set_page_config(page_title="명리(命理) - AI 사주 풀이", page_icon="🔮", layout="centered")
+st.set_page_config(page_title="Destiny Code - AI 사주 풀이", page_icon="🔮", layout="centered")
 
 # 프리미엄 스타일링 (Oriental Light Theme)
 st.markdown("""
@@ -120,8 +120,8 @@ def main():
     if not os.path.exists("data"):
         os.makedirs("data", exist_ok=True)
         
-    st.title("命 理 (명 리)")
-    st.markdown("<h3 style='text-align: center; opacity: 0.8;'>AI 정통 사주 심층 분석 (일체형)</h3>", unsafe_allow_html=True)
+    st.title("Destiny Code")
+    st.markdown("<h3 style='text-align: center; opacity: 0.8;'>Your Life, Written in Code.</h3>", unsafe_allow_html=True)
     st.divider()
 
     with st.sidebar:
@@ -609,7 +609,7 @@ def main():
                 except Exception as e:
                     st.error(f"분석 중 오류 발생: {str(e)}")
 
-    st.markdown("<br><br><p style='text-align: center; opacity: 0.5;'>© 2026 AI 명리학 연구원. All rights reserved.</p>", unsafe_allow_html=True)
+
 
 if __name__ == "__main__":
     main()
