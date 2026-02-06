@@ -244,7 +244,12 @@ def main():
                     lookup_key = item
                     if item == '인': lookup_key = '본인'
                     
-                    # 1. 먼저 전체 단어로 검색
+                    # '천간합', '지지충' 등 접두어가 붙은 경우 원본 단어 추출
+                    clean_item = item.replace("천간", "").replace("지지", "")
+                    lookup_key = clean_item if clean_item in SAJU_TERMS else lookup_key
+                    if clean_item == '인': lookup_key = '본인'
+                    
+                    # 1. 먼저 단어로 검색
                     desc = SAJU_TERMS.get(lookup_key)
                     
                     if desc:
@@ -371,8 +376,8 @@ def main():
                     inter_rels = []
                     sinsal_rels = []
                     
-                    if STEM_RELATIONS['충'].get(d_stem) == p_stem: inter_rels.append("충(沖)")
-                    if STEM_RELATIONS['합'].get(d_stem) == p_stem: inter_rels.append("합(合)")
+                    if STEM_RELATIONS['충'].get(d_stem) == p_stem: inter_rels.append("천간충(沖)")
+                    if STEM_RELATIONS['합'].get(d_stem) == p_stem: inter_rels.append("천간합(合)")
                     if BRANCH_RELATIONS['충'].get(d_branch) == p_branch: inter_rels.append("충(沖)")
                     if BRANCH_RELATIONS['합'].get(d_branch) == p_branch: inter_rels.append("합(合)")
                     
@@ -507,8 +512,8 @@ def main():
                         inter_rels = []
                         sinsal_rels = []
                         
-                        if STEM_RELATIONS['충'].get(s_stem) == t_stem: inter_rels.append("충(沖)")
-                        if STEM_RELATIONS['합'].get(s_stem) == t_stem: inter_rels.append("합(合)")
+                        if STEM_RELATIONS['충'].get(s_stem) == t_stem: inter_rels.append("천간충(沖)")
+                        if STEM_RELATIONS['합'].get(s_stem) == t_stem: inter_rels.append("천간합(合)")
                         if BRANCH_RELATIONS['충'].get(s_branch) == t_branch: inter_rels.append("충(沖)")
                         if BRANCH_RELATIONS['합'].get(s_branch) == t_branch: inter_rels.append("합(合)")
                         
