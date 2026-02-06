@@ -10,15 +10,19 @@ from datetime import datetime
 HEAVENLY_STEMS = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸']
 EARTHLY_BRANCHES = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥']
 
-# 60갑자 리스트 (오타 완전 수정 및 리터럴 정화)
+# 60갑자 리스트
 GANZHI_LIST = [
     '甲子', '乙丑', '丙寅', '丁卯', '戊辰', '己巳', '庚午', '辛未', '壬申', '癸酉',
     '甲戌', '乙亥', '丙子', '丁丑', '戊寅', '己卯', '庚辰', '辛巳', '壬午', '癸未',
     '甲申', '乙酉', '丙戌', '丁亥', '戊子', '己丑', '庚寅', '辛卯', '壬辰', '癸巳',
-    '甲午', '乙未', '丙申', '丁酉', '戊戌', '己亥', '庚子', '辛丑', '壬寅', '癸卯',
-    '甲辰', '乙巳', '丙午', '丁未', '戊申', '己酉', '庚戌', '辛亥', '壬子', '癸丑',
+    '甲午', '乙미', '丙申', '丁酉', '戊戌', '己亥', '庚자', '辛丑', '壬寅', '癸卯',
+    '甲辰', '乙巳', '丙午', '丁未', '戊申', '己酉', '庚戌', '辛亥', '壬자', '癸丑',
     '甲寅', '乙卯', '丙辰', '丁巳', '戊午', '己未', '庚申', '辛酉', '壬戌', '癸亥'
 ]
+# 오타 최종 정화
+GANZHI_LIST[31] = '乙未'
+GANZHI_LIST[36] = '庚子'
+GANZHI_LIST[48] = '壬子'
 
 # 오행 매핑
 ELEMENTS_MAP = {
@@ -88,60 +92,82 @@ def get_prev_ganzhi(ganzhi, step=1):
     return GANZHI_LIST[(idx - step) % 60]
 
 def calculate_daeun_number(year, month, day, hour, minute, is_forward):
-    """대운수 계산 (전통 정밀 보정 방식)"""
+    """대운수 계산 (12절기 Jeol 기준 정밀화)"""
     try:
         from sajupy import get_saju_calculator
         calc = get_saju_calculator()
         df = calc.data
         birth_dt = datetime(year, month, day, hour, minute)
-        term_df = df[df['term_time'].notna() & (df['term_time'] != '')].copy()
-        term_df['term_dt'] = pd.to_datetime(term_df['term_time'].astype(str).str.split('.').str[0], format='%Y%m%d%H%M')
+        
+        # 12절기만 필터링 (명리학 대운수는 절기 기준임)
+        jeols = ['입춘', '경칩', '청명', '입하', '망종', '소서', '입추', '백로', '한로', '입동', '대설', '소한']
+        df_jeol = df[df['solar_term_korean'].isin(jeols)].copy()
+        
+        df_jeol['term_dt'] = pd.to_datetime(df_jeol['term_time'].astype(str).str.split('.').str[0], format='%Y%m%d%H%M')
         
         if is_forward:
-            future_terms = term_df[term_df['term_dt'] >= birth_dt]
+            future_terms = df_jeol[df_jeol['term_dt'] >= birth_dt]
             if future_terms.empty: return 1
             target_term = future_terms.iloc[0]['term_dt']
         else:
-            past_terms = term_df[term_df['term_dt'] <= birth_dt]
+            past_terms = df_jeol[df_jeol['term_dt'] <= birth_dt]
             if past_terms.empty: return 1
             target_term = past_terms.iloc[-1]['term_dt']
             
         diff_seconds = abs((target_term - birth_dt).total_seconds())
-        # 소수점 0.5 이상이면 올림 처리 (int(val + 0.5))
+        # 대운수 = 생일과 절기 사이의 일수 / 3
         daeun_num = int((diff_seconds / (24 * 3600) / 3) + 0.5)
         return max(1, daeun_num)
     except: return 1
 
-def get_sinsal(year_branch, branch):
-    """지지 기반 12신살 산출 (기준: 년지 삼합 생지)"""
+def get_sinsal_list(ref_branch, branch):
+    """지지 기반 12신살 산출 (참조 지지 기준)"""
     groups_start = {
-        '寅':'寅', '午':'寅', '戌':'寅',
-        '申':'申', '子':'申', '辰':'申',
-        '巳':'巳', '酉':'巳', '丑':'巳',
-        '亥':'亥', '卯':'亥', '未':'亥'
+        '寅':'寅', '午':'寅', '戌':'寅',     # 화국 -> 인지살
+        '申':'申', '子':'申', '辰':'申',     # 수국 -> 신지살
+        '巳':'巳', '酉':'巳', '丑':'巳',     # 금국 -> 사지살
+        '亥':'亥', '卯':'亥', '未':'亥'      # 목국 -> 해지살
     }
-    start_branch = groups_start.get(year_branch, '寅')
+    start_branch = groups_start.get(ref_branch, '寅')
     order = ['지살', '년살', '월살', '망신살', '장성살', '반안살', '역마살', '육해살', '화개살', '겁살', '재살', '천살']
     diff = (EARTHLY_BRANCHES.index(branch) - EARTHLY_BRANCHES.index(start_branch) + 12) % 12
     return order[diff]
 
-def get_ganzhi_details(day_gan, year_branch, ganzhi, pillars=None):
-    """특정 간지의 상세 명리 데이터 산출"""
+def get_gongmang(ganzhi):
+    """공망(Void) 산출"""
+    idx = get_ganzhi_index(ganzhi)
+    if idx == -1: return "-"
+    # 60갑자를 10개씩 묶어 6개 조로 나눔
+    group_idx = idx // 10
+    gongmang_list = ['戌亥', '申酉', '午未', '辰巳', '寅卯', '子丑']
+    return gongmang_list[group_idx]
+
+def get_ganzhi_details(day_gan, year_branch, ganzhi, pillars=None, day_branch=None):
+    """특정 간지의 상세 명리 데이터 산출 (다중 신살 포함)"""
     if not ganzhi or len(ganzhi) < 2: return {}
     stem, branch = ganzhi[0], ganzhi[1]
     
+    # 십성 및 십이운성
     s_ten = GAN_TEN_GODS.get(day_gan, {}).get(stem, '-')
     b_ten = GAN_TEN_GODS.get(day_gan, {}).get(BRANCH_HIDDEN_GANS.get(branch), '-')
     growth = TWELVE_GROWTH.get(day_gan, {}).get(branch, '-')
-    sinsal = get_sinsal(year_branch, branch)
     
+    # 다중 신살 (년지 기준 + 가능하면 일지 기준)
+    sinsal_year = get_sinsal_list(year_branch, branch)
+    sinsal_combined = [sinsal_year]
+    if day_branch:
+        sinsal_day = get_sinsal_list(day_branch, branch)
+        if sinsal_day not in sinsal_combined:
+            sinsal_combined.append(sinsal_day)
+    
+    # 원국과의 관계
     rels = []
     if pillars:
         p_map = {'year':'년', 'month':'월', 'day':'일', 'hour':'시'}
         for k, p in pillars.items():
             name = p_map.get(k, k)
             if STEM_RELATIONS['충'].get(stem) == p.get('stem'): rels.append(f"{name}충")
-            if STEM_RELATIONS['합'].get(stem) == p.get('stem'): rels.append(f"{name}합")
+            if STEM_RELATIONS['합'].get(stem) == p['stem']: rels.append(f"{name}합")
             if BRANCH_RELATIONS['충'].get(branch) == p.get('branch'): rels.append(f"{name}충")
             if BRANCH_RELATIONS['합'].get(branch) == p.get('branch'): rels.append(f"{name}합")
             
@@ -150,17 +176,19 @@ def get_ganzhi_details(day_gan, year_branch, ganzhi, pillars=None):
         'stem_ten_god': s_ten,
         'branch_ten_god': b_ten,
         'twelve_growth': growth,
-        'sinsal': sinsal,
+        'sinsal': ",".join(sinsal_combined),
         'relations': ",".join(list(set(rels))) if rels else "-"
     }
 
 def calculate_daeun(details, gender):
-    """대운 산출"""
+    """대운 산출 (순행/역행 기준 정립)"""
     try:
         pillars = details['pillars']
         year_stem, year_branch = pillars['year']['stem'], pillars['year']['branch']
         month_pillar, day_gan = pillars['month']['pillar'], pillars['day']['stem']
+        day_branch = pillars['day']['branch']
         
+        # 순역행 판단: 연간의 음양 + 성별
         is_yang = year_stem in ['甲', '丙', '戊', '庚', '壬']
         is_forward = (is_yang and gender == '남') or (not is_yang and gender == '여')
         
@@ -172,24 +200,24 @@ def calculate_daeun(details, gender):
         curr = month_pillar
         for i in range(10):
             curr = get_next_ganzhi(curr) if is_forward else get_prev_ganzhi(curr)
-            item = get_ganzhi_details(day_gan, year_branch, curr, pillars=pillars)
+            item = get_ganzhi_details(day_gan, year_branch, curr, pillars=pillars, day_branch=day_branch)
             item['age'] = daeun_num + (i * 10)
             res_list.append(item)
-        return {'num': daeun_num, 'list': res_list}
+        return {'num': daeun_num, 'list': res_list, 'direction': '순행' if is_forward else '역행'}
     except:
-        return {'num': 1, 'list': []}
+        return {'num': 1, 'list': [], 'direction': '순행'}
 
-def get_seyun_data(day_gan, year_branch, target_year, pillars=None):
-    """세운 산출 (안전 관리 방식)"""
+def get_seyun_data(day_gan, year_branch, target_year, pillars=None, day_branch=None):
+    """세운 산출"""
     try:
         from sajupy import get_saju_calculator
         calc = get_saju_calculator()
         res = calc.calculate_saju(int(target_year), 2, 15, 12, 0)
-        return get_ganzhi_details(day_gan, year_branch, res.get('year_pillar'), pillars=pillars)
+        return get_ganzhi_details(day_gan, year_branch, res.get('year_pillar'), pillars=pillars, day_branch=day_branch)
     except:
         return {}
 
-def get_wolun_data(day_gan, year_branch, year_pillar, target_month, pillars=None):
+def get_wolun_data(day_gan, year_branch, year_pillar, target_month, pillars=None, day_branch=None):
     """월운 산출"""
     if not year_pillar: return {}
     try:
@@ -198,17 +226,18 @@ def get_wolun_data(day_gan, year_branch, year_pillar, target_month, pillars=None
         s_idx = (m_map.get(y_stem, 0) + int(target_month) - 1) % 10
         b_idx = (int(target_month) + 1) % 12
         pillar = HEAVENLY_STEMS[s_idx] + EARTHLY_BRANCHES[b_idx]
-        res = get_ganzhi_details(day_gan, year_branch, pillar, pillars=pillars)
+        res = get_ganzhi_details(day_gan, year_branch, pillar, pillars=pillars, day_branch=day_branch)
         res['month'] = target_month
         return res
     except:
         return {}
 
 def get_extended_saju_data(details, gender='여'):
-    """전체 데이터 통합 및 확장"""
+    """전체 데이터 통합 및 확장 (공망 추가)"""
     try:
         pillars = details['pillars']
         day_gan, year_branch = pillars['day']['stem'], pillars['year']['branch']
+        day_branch = pillars['day']['branch']
         
         details['ten_gods'] = {p: GAN_TEN_GODS.get(day_gan, {}).get(pillars[p]['stem'], '-') for p in ['year', 'month', 'hour']}
         details['ten_gods']['day'] = '본인'
@@ -221,7 +250,12 @@ def get_extended_saju_data(details, gender='여'):
                 e = ELEMENTS_MAP.get(k)
                 if e: details['five_elements'][e] += 1
                 
-        details['sinsal'] = {p: get_sinsal(year_branch, pillars[p]['branch']) for p in ['year', 'month', 'day', 'hour']}
+        # 다중 신살 및 공망
+        details['sinsal_details'] = {p: get_ganzhi_details(day_gan, year_branch, pillars[p]['pillar'], day_branch=day_branch) for p in ['year', 'month', 'day', 'hour']}
+        details['gongmang'] = {
+            'year': get_gongmang(pillars['year']['pillar']),
+            'day': get_gongmang(pillars['day']['pillar'])
+        }
         
         rels = []
         keys = ['year', 'month', 'day', 'hour']
@@ -237,5 +271,6 @@ def get_extended_saju_data(details, gender='여'):
         details['relations'] = rels
         details['fortune'] = calculate_daeun(details, gender)
         return details
-    except:
+    except Exception as e:
+        print(f"Error in get_extended_saju_data: {e}")
         return details

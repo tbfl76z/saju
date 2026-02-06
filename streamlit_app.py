@@ -199,23 +199,27 @@ def main():
         pillars = data['pillars']
         
         st.subheader("🔮 사주 4주 명식")
-        # 테이블 시각화 (신살 및 지지십성 추가)
+        # 테이블 시각화 (신살 및 지지십성 추가, 공망 반영)
         html_table = f"""
         <table class='saju-table'>
-            <tr><th>구분</th><th>시주(時)</th><th>일주(日)</th><th>월주(月)</th><th>연주(年)</th></tr>
+            <tr><th>구분</th><th>시주(時)</th><th>일주(日)</th><th>월주(月)</th><th>연주(년)</th></tr>
             <tr><td>천간</td><td class='pillar-cell'>{pillars['hour']['stem']}</td><td class='pillar-cell'>{pillars['day']['stem']}</td><td class='pillar-cell'>{pillars['month']['stem']}</td><td class='pillar-cell'>{pillars['year']['stem']}</td></tr>
             <tr><td>지지</td><td class='pillar-cell'>{pillars['hour']['branch']}</td><td class='pillar-cell'>{pillars['day']['branch']}</td><td class='pillar-cell'>{pillars['month']['branch']}</td><td class='pillar-cell'>{pillars['year']['branch']}</td></tr>
             <tr><td>십성</td><td class='ten-god'>{data['ten_gods']['hour']}</td><td class='ten-god'>{data['ten_gods']['day']}</td><td class='ten-god'>{data['ten_gods']['month']}</td><td class='ten-god'>{data['ten_gods']['year']}</td></tr>
             <tr><td>지지십성</td><td>{data['jiji_ten_gods']['hour']}</td><td>{data['jiji_ten_gods']['day']}</td><td>{data['jiji_ten_gods']['month']}</td><td>{data['jiji_ten_gods']['year']}</td></tr>
             <tr><td>12운성</td><td>{data['twelve_growth']['hour']}</td><td>{data['twelve_growth']['day']}</td><td>{data['twelve_growth']['month']}</td><td>{data['twelve_growth']['year']}</td></tr>
-            <tr><td>신살</td><td>{data['sinsal']['hour']}</td><td>{data['sinsal']['day']}</td><td>{data['sinsal']['month']}</td><td>{data['sinsal']['year']}</td></tr>
+            <tr><td>신살</td><td>{data['sinsal_details']['hour']['sinsal']}</td><td>{data['sinsal_details']['day']['sinsal']}</td><td>{data['sinsal_details']['month']['sinsal']}</td><td>{data['sinsal_details']['year']['sinsal']}</td></tr>
         </table>
         """
         st.markdown(html_table, unsafe_allow_html=True)
         
-        # 지지 관계(형충회합) 표시
-        if data.get('relations'):
-            st.info(f"💡 **지지 관계:** {', '.join(data['relations'])}")
+        # 공망 및 지지 관계 표시
+        col_g1, col_g2 = st.columns(2)
+        with col_g1:
+            st.warning(f"🕳️ **공망 (Void):** [년]{data['gongmang']['year']} [일]{data['gongmang']['day']}")
+        with col_g2:
+            if data.get('relations'):
+                st.info(f"💡 **지지 관계:** {', '.join(data['relations'])}")
         
         # 오행 분포 시각화 고도화
         elems = data['five_elements']
@@ -230,7 +234,8 @@ def main():
 
         # 대운(Daeun) 시각화 (신살/관계 추가 및 레이아웃 개선)
         st.subheader("📅 대운(大運)의 흐름")
-        st.write(f"현재 대운수: **{data['fortune']['num']}** (대운이 바뀌는 나이)")
+        daeun_info = data['fortune']
+        st.write(f"현재 대운수: **{daeun_info['num']}** ({daeun_info['direction']}, 대운이 바뀌는 나이)")
         
         df_list = data['fortune']['list']
         for i in range(0, len(df_list), 4):
@@ -278,7 +283,11 @@ def main():
             
             w_cols = st.columns(4)
             for m in range(1, 13):
-                wolun = get_wolun_data(pillars['day']['stem'], pillars['year']['branch'], seyun.get('ganzhi', '甲子'), m, pillars=pillars)
+                wolun = get_wolun_data(pillars.get('day', {}).get('stem', '甲'), 
+                                     pillars.get('year', {}).get('branch', '子'), 
+                                     seyun.get('ganzhi', '甲子'), m, 
+                                     pillars=pillars, 
+                                     day_branch=pillars.get('day', {}).get('branch', '丑'))
                 with w_cols[(m-1) % 4]:
                     st.markdown(f"""
                     <div style='border:1px solid #f0f0f0; padding:10px; border-radius:12px; text-align:center; background-color:#fff; margin-bottom:10px; border-left:4px solid #ffc107;'>
@@ -287,7 +296,6 @@ def main():
                         <div style='font-size:0.8rem; color:#d63384;'>{wolun.get('stem_ten_god', '-')} | {wolun.get('branch_ten_god', '-')}</div>
                         <div style='font-size:0.7rem; color:#1976d2;'>{wolun.get('twelve_growth', '-')}</div>
                         <div style='font-size:0.7rem; color:#198754;'>{wolun.get('sinsal', '-')}</div>
-                        <div style='font-size:0.65rem; color:#dc3545;'>{wolun.get('relations', '-')}</div>
                     </div>
                     """, unsafe_allow_html=True)
 
