@@ -146,7 +146,11 @@ def main():
             )
         with col2:
             gender = st.radio("성별", ["여", "남"], horizontal=True)
-            birth_time = st.time_input("태어난 시각", value=datetime.time(0, 0), step=60)
+            t_col1, t_col2 = st.columns(2)
+            with t_col1:
+                b_hour = st.selectbox("태어난 시", range(24), index=0)
+            with t_col2:
+                b_minute = st.selectbox("태어난 분", range(60), index=0)
             
         col3, col4 = st.columns(2)
         with col3:
@@ -161,7 +165,7 @@ def main():
             # early_zi_time=False (23시부터 다음날로 처리하는 자시 기준 - 23:30 보정 시 정확히 한국 기준)
             saju_res = calculate_saju(
                 birth_date.year, birth_date.month, birth_date.day, 
-                birth_time.hour, birth_time.minute,
+                b_hour, b_minute,
                 use_solar_time=True, 
                 longitude=127.5,
                 early_zi_time=False
@@ -173,7 +177,7 @@ def main():
                 # sajupy는 내부적으로 양력 데이터를 사용하므로 음력->양력 변환 후 재계산
                 solar_res = lunar_to_solar(birth_date.year, birth_date.month, birth_date.day, is_leap_month=is_leap)
                 y, m, d = solar_res['solar_year'], solar_res['solar_month'], solar_res['solar_day']
-                saju_res = calculate_saju(y, m, d, birth_time.hour, birth_time.minute, 
+                saju_res = calculate_saju(y, m, d, b_hour, b_minute, 
                                         use_solar_time=True, longitude=127.5, early_zi_time=False)
                 details = get_saju_details(saju_res)
             
@@ -222,38 +226,41 @@ def main():
             progress_val = min(val / 8, 1.0)
             cols[idx].progress(progress_val)
 
-        # 대운(Daeun) 시각화
+        # 대운(Daeun) 시각화 (신살/관계 추가 및 레이아웃 개선)
         st.subheader("📅 대운(大運)의 흐름")
         st.write(f"현재 대운수: **{data['fortune']['num']}** (대운이 바뀌는 나이)")
         
         df_list = data['fortune']['list']
-        cols = st.columns(5)
-        for i, item in enumerate(df_list):
-            with cols[i % 5]:
-                st.markdown(f"""
-                <div style='border:1px solid #ddd; padding:10px; border-radius:10px; text-align:center; background-color:#f9f9f9; margin-bottom:10px;'>
-                    <div style='font-size:0.8rem; color:#666;'>{item['age']}세~</div>
-                    <div style='font-size:1.1rem; font-weight:bold; color:#d63384;'>{item['ganzhi']}</div>
-                    <div style='font-size:0.8rem;'>{item['stem_ten_god']}</div>
-                    <div style='font-size:0.8rem;'>{item['branch_ten_god']}</div>
-                    <div style='font-size:0.7rem; color:#0d6efd;'>{item['twelve_growth']}</div>
-                </div>
-                """, unsafe_allow_html=True)
-            if (i+1) % 5 == 0 and i < len(df_list)-1:
-                cols = st.columns(5)
+        for i in range(0, len(df_list), 4):
+            cols = st.columns(4)
+            chunk = df_list[i:i+4]
+            for idx, item in enumerate(chunk):
+                with cols[idx]:
+                    st.markdown(f"""
+                    <div style='border:1px solid #e0e0e0; padding:12px; border-radius:12px; text-align:center; background-color:#ffffff; margin-bottom:15px; box-shadow: 2px 2px 5px rgba(0,0,0,0.05);'>
+                        <div style='font-size:0.9rem; font-weight:bold; color:#ff9800;'>{item['age']}세~</div>
+                        <div style='font-size:1.6rem; font-weight:bold; color:#2c3e50; margin:5px 0;'>{item['ganzhi']}</div>
+                        <div style='font-size:0.85rem; color:#d32f2f;'>{item['stem_ten_god']} | {item['branch_ten_god']}</div>
+                        <div style='font-size:0.8rem; color:#1976d2;'>{item['twelve_growth']}</div>
+                        <div style='font-size:0.75rem; color:#388e3c; margin-top:5px;'>✨ {item['sinsal']}</div>
+                        <div style='font-size:0.7rem; color:#7b1fa2;'>🔗 {item['relations']}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
 
         # 세운(Seyun) 시각화
         from saju_utils import get_seyun_data
         cur_year = datetime.datetime.now().year
-        seyun = get_seyun_data(pillars['day']['stem'], cur_year)
+        seyun = get_seyun_data(pillars['day']['stem'], pillars['year']['branch'], cur_year, pillars=pillars)
         if seyun:
             st.subheader(f"✨ {cur_year}년 올해의 운세")
             st.markdown(f"""
-            <div style='display:flex; gap:15px; justify-content:center; padding:15px; background-color:#fff3cd; border-radius:15px;'>
-                <div style='text-align:center;'><small>연도</small><br><b>{cur_year}</b></div>
-                <div style='text-align:center;'><small>간지</small><br><b style='color:#d63384;'>{seyun['ganzhi']}</b></div>
-                <div style='text-align:center;'><small>십성(천/지)</small><br>{seyun['stem_ten_god']}/{seyun['branch_ten_god']}</div>
-                <div style='text-align:center;'><small>12운성</small><br>{seyun['twelve_growth']}</div>
+            <div style='display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; padding:20px; background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%); border-radius:15px; text-align:center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
+                <div><small style='color:#856404;'>연도</small><br><b style='font-size:1.2em;'>{cur_year}</b></div>
+                <div><small style='color:#856404;'>간지 (세운)</small><br><b style='font-size:1.5em; color:#d63384;'>{seyun['ganzhi']}</b></div>
+                <div><small style='color:#856404;'>12운성</small><br><b style='font-size:1.2em; color:#0d6efd;'>{seyun['twelve_growth']}</b></div>
+                <div style='grid-column: span 1;'><small style='color:#856404;'>십성(천/지)</small><br>{seyun['stem_ten_god']}/{seyun['branch_ten_god']}</div>
+                <div style='grid-column: span 1;'><small style='color:#856404;'>신살</small><br><span style='color:#198754; font-weight:bold;'>{seyun['sinsal']}</span></div>
+                <div style='grid-column: span 1;'><small style='color:#856404;'>합충/형</small><br><span style='color:#dc3545; font-weight:bold;'>{seyun['relations']}</span></div>
             </div>
             """, unsafe_allow_html=True)
 
@@ -261,19 +268,20 @@ def main():
             from saju_utils import get_wolun_data
             st.subheader(f"📅 {cur_year}년 월별 운세 흐름")
             
-            w_cols = st.columns(6)
+            w_cols = st.columns(4)
             for m in range(1, 13):
-                wolun = get_wolun_data(pillars['day']['stem'], seyun['ganzhi'], m)
-                with w_cols[(m-1) % 6]:
+                wolun = get_wolun_data(pillars['day']['stem'], pillars['year']['branch'], seyun['ganzhi'], m, pillars=pillars)
+                with w_cols[(m-1) % 4]:
                     st.markdown(f"""
-                    <div style='border:1px solid #f0f0f0; padding:5px; border-radius:8px; text-align:center; background-color:#fff; margin-bottom:5px;'>
-                        <div style='font-size:0.75rem; color:#888;'>{m}월</div>
-                        <div style='font-size:1.0rem; font-weight:bold;'>{wolun['ganzhi']}</div>
-                        <div style='font-size:0.7rem; color:#d63384;'>{wolun['stem_ten_god']}</div>
+                    <div style='border:1px solid #f0f0f0; padding:10px; border-radius:12px; text-align:center; background-color:#fff; margin-bottom:10px; border-left:4px solid #ffc107;'>
+                        <div style='font-size:0.85rem; font-weight:bold; color:#666;'>{m}월</div>
+                        <div style='font-size:1.3rem; font-weight:bold; color:#2c3e50;'>{wolun['ganzhi']}</div>
+                        <div style='font-size:0.8rem; color:#d63384;'>{wolun['stem_ten_god']} | {wolun['branch_ten_god']}</div>
+                        <div style='font-size:0.7rem; color:#1976d2;'>{wolun['twelve_growth']}</div>
+                        <div style='font-size:0.7rem; color:#198754;'>{wolun['sinsal']}</div>
+                        <div style='font-size:0.65rem; color:#dc3545;'>{wolun['relations']}</div>
                     </div>
                     """, unsafe_allow_html=True)
-                if m == 6:
-                    w_cols = st.columns(6)
 
         st.divider()
         
