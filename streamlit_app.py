@@ -301,7 +301,7 @@ def main():
 
             # 월운(Wolun) 시각화 - 현재 연도 기준
             from saju_utils import get_wolun_data
-            st.subheader(f"📅 {cur_year}년 월별 운세 흐름")
+            st.subheader(f"📅 {now_year}년 월별 운세 흐름")
             
             # 현재 연도 세운 찾기
             cur_seyun = next((s for s in seyun_list if s['year'] == now_year), seyun_list[0] if seyun_list else {})
