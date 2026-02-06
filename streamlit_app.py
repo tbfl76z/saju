@@ -260,7 +260,6 @@ def main():
             # 현재 대운 기간의 시작 연도 계산
             birth_year = int(data.get('birth_date', '1990-01-01').split('-')[0])
             # 현재 나이에 해당하는 대운 찾기
-            import datetime
             now_year = datetime.datetime.now().year
             korean_age = now_year - birth_year + 1
             
