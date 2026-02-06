@@ -208,7 +208,7 @@ def calculate_daeun(details, gender):
         return {'num': 1, 'list': [], 'direction': '순행'}
 
 def get_seyun_data(day_gan, year_branch, target_year, pillars=None, day_branch=None):
-    """세운 산출"""
+    """세운 산출 (안전 관리 방식)"""
     try:
         from sajupy import get_saju_calculator
         calc = get_saju_calculator()
@@ -216,6 +216,17 @@ def get_seyun_data(day_gan, year_branch, target_year, pillars=None, day_branch=N
         return get_ganzhi_details(day_gan, year_branch, res.get('year_pillar'), pillars=pillars, day_branch=day_branch)
     except:
         return {}
+
+def get_seyun_list(day_gan, year_branch, start_year, count=10, pillars=None, day_branch=None):
+    """지정된 시작 연도부터 N개년 세운 리스트 산출"""
+    res = []
+    for i in range(count):
+        y = start_year + i
+        data = get_seyun_data(day_gan, year_branch, y, pillars=pillars, day_branch=day_branch)
+        if data:
+            data['year'] = y
+            res.append(data)
+    return res
 
 def get_wolun_data(day_gan, year_branch, year_pillar, target_month, pillars=None, day_branch=None):
     """월운 산출"""
@@ -269,6 +280,10 @@ def get_extended_saju_data(details, gender='여'):
                 if BRANCH_RELATIONS['충'].get(b1) == b2: rels.append(f"{names[keys[i]]}-{names[keys[j]]} 충")
                 if BRANCH_RELATIONS['합'].get(b1) == b2: rels.append(f"{names[keys[i]]}-{names[keys[j]]} 합")
         details['relations'] = rels
+        
+        # 하위 호환성을 위한 단순 sinsal 키 복구
+        details['sinsal'] = {p: details['sinsal_details'][p]['sinsal'] for p in ['year', 'month', 'day', 'hour']}
+        
         details['fortune'] = calculate_daeun(details, gender)
         return details
     except Exception as e:

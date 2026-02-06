@@ -254,38 +254,64 @@ def main():
                     </div>
                     """, unsafe_allow_html=True)
 
-        # 세운(Seyun) 시각화
-        from saju_utils import get_seyun_data
+        # 세운(Seyun) 시각화 - 10년치 전체 그리드
+        from saju_utils import get_seyun_list
         try:
-            cur_year = datetime.datetime.now().year
-            seyun = get_seyun_data(pillars.get('day', {}).get('stem', '甲'), 
-                                 pillars.get('year', {}).get('branch', '子'), 
-                                 cur_year, pillars=pillars)
+            # 현재 대운 기간의 시작 연도 계산
+            birth_year = int(data.get('birth_date', '1990-01-01').split('-')[0])
+            # 현재 나이에 해당하는 대운 찾기
+            import datetime
+            now_year = datetime.datetime.now().year
+            korean_age = now_year - birth_year + 1
+            
+            # 현재 나이가 포함된 대운의 시작 나이 찾기
+            current_daeun_age = data['fortune']['num']
+            for d in data['fortune']['list']:
+                if d['age'] <= korean_age < d['age'] + 10:
+                    current_daeun_age = d['age']
+                    break
+            
+            seyun_start_year = birth_year + current_daeun_age - 1
+            seyun_list = get_seyun_list(pillars.get('day', {}).get('stem', '甲'), 
+                                      pillars.get('year', {}).get('branch', '子'), 
+                                      seyun_start_year, count=10, pillars=pillars,
+                                      day_branch=pillars.get('day', {}).get('branch', '丑'))
         except:
-            seyun = {}
+            seyun_list = []
 
-        if seyun and seyun.get('ganzhi'):
-            st.subheader(f"✨ {cur_year}년 올해의 운세")
-            st.markdown(f"""
-            <div style='display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; padding:20px; background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%); border-radius:15px; text-align:center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
-                <div><small style='color:#856404;'>연도</small><br><b style='font-size:1.2em;'>{cur_year}</b></div>
-                <div><small style='color:#856404;'>간지 (세운)</small><br><b style='font-size:1.5em; color:#d63384;'>{seyun['ganzhi']}</b></div>
-                <div><small style='color:#856404;'>12운성</small><br><b style='font-size:1.2em; color:#0d6efd;'>{seyun['twelve_growth']}</b></div>
-                <div style='grid-column: span 1;'><small style='color:#856404;'>십성(천/지)</small><br>{seyun['stem_ten_god']}/{seyun['branch_ten_god']}</div>
-                <div style='grid-column: span 1;'><small style='color:#856404;'>신살</small><br><span style='color:#198754; font-weight:bold;'>{seyun['sinsal']}</span></div>
-                <div style='grid-column: span 1;'><small style='color:#856404;'>합충/형</small><br><span style='color:#dc3545; font-weight:bold;'>{seyun['relations']}</span></div>
-            </div>
-            """, unsafe_allow_html=True)
+        if seyun_list:
+            st.subheader(f"📅 세운(年運): {seyun_start_year}년 ~ {seyun_start_year+9}년")
+            for i in range(0, len(seyun_list), 5):
+                s_cols = st.columns(5)
+                chunk = seyun_list[i:i+5]
+                for idx, s_item in enumerate(chunk):
+                    is_current = s_item['year'] == now_year
+                    border_color = "#d63384" if is_current else "#e0e0e0"
+                    bg_color = "#fff0f6" if is_current else "#ffffff"
+                    with s_cols[idx]:
+                        st.markdown(f"""
+                        <div style='border:2px solid {border_color}; padding:10px; border-radius:12px; text-align:center; background-color:{bg_color}; margin-bottom:10px; min-height:180px;'>
+                            <div style='font-size:0.8rem; font-weight:bold; color:#666;'>{s_item['year']}년</div>
+                            <div style='font-size:1.4rem; font-weight:bold; color:{border_color}; margin:3px 0;'>{s_item['ganzhi']}</div>
+                            <div style='font-size:0.8rem; color:#d32f2f;'>{s_item['stem_ten_god']} | {s_item['branch_ten_god']}</div>
+                            <div style='font-size:0.75rem; color:#1976d2;'>{s_item['twelve_growth']}</div>
+                            <div style='font-size:0.7rem; color:#388e3c; margin-top:3px;'>✨ {s_item['sinsal']}</div>
+                            <div style='font-size:0.65rem; color:#7b1fa2;'>🔗 {s_item['relations']}</div>
+                        </div>
+                        """, unsafe_allow_html=True)
 
             # 월운(Wolun) 시각화 - 현재 연도 기준
             from saju_utils import get_wolun_data
             st.subheader(f"📅 {cur_year}년 월별 운세 흐름")
             
+            # 현재 연도 세운 찾기
+            cur_seyun = next((s for s in seyun_list if s['year'] == now_year), seyun_list[0] if seyun_list else {})
+            
             w_cols = st.columns(4)
             for m in range(1, 13):
                 wolun = get_wolun_data(pillars.get('day', {}).get('stem', '甲'), 
                                      pillars.get('year', {}).get('branch', '子'), 
-                                     seyun.get('ganzhi', '甲子'), m, 
+                                     cur_seyun.get('ganzhi', '甲子'), m, 
                                      pillars=pillars, 
                                      day_branch=pillars.get('day', {}).get('branch', '丑'))
                 with w_cols[(m-1) % 4]:
@@ -319,10 +345,11 @@ def main():
                     [양력 생일] {data['birth_date']} {data['birth_time']}
                     [사주 4주] 연:{pillars['year']['pillar']}, 월:{pillars['month']['pillar']}, 일:{pillars['day']['pillar']}, 시:{pillars['hour']['pillar']}
                     [오행분포] {elems}
+                    [공망] 년:{data['gongmang']['year']}, 일:{data['gongmang']['day']}
                     [신살 및 관계] {data['sinsal']}, {data['relations']}
                     [대운 정보] 대운수 {data['fortune']['num']}, 전체 리스트: {data['fortune']['list']}
-                    [현재 세운] {cur_year}년 ({seyun['ganzhi'] if seyun else 'N/A'})
-                    [월운 예시] {cur_year}년 1~12월 흐름 가용함
+                    [현재 세운] {now_year}년 ({cur_seyun['ganzhi'] if cur_seyun else 'N/A'})
+                    [월운 예시] {now_year}년 1~12월 흐름 가용함
                     """
                     
                     prompt = f"""
