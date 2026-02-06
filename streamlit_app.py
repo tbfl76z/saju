@@ -232,24 +232,41 @@ def main():
         from saju_data import SAJU_TERMS
 
         def term_popover(label, value, key_suffix):
-            # 신살의 경우 ','로 구분된 여러 개일 수 있음
+            # 신살이나 관계의 경우 ','로 구분된 여러 개일 수 있음
             if not value or value == '-':
                 st.write("-")
                 return
                 
             items = [v.strip() for v in value.split(',')]
             
-            # 버튼 스타일을 흉내내거나 깔끔하게 표시
             with st.popover(value, use_container_width=True):
                 for item in items:
-                    # '본인' 등 특수 용어 처리
                     lookup_key = item
-                    if item == '인': # 본인 등의 처리 (필요시)
-                        lookup_key = '본인'
+                    if item == '인': lookup_key = '본인'
                     
-                    desc = SAJU_TERMS.get(lookup_key, "상세 정보가 구축 중입니다.")
-                    st.markdown(f"**{item}**")
-                    st.caption(desc)
+                    # 1. 먼저 전체 단어로 검색
+                    desc = SAJU_TERMS.get(lookup_key)
+                    
+                    if desc:
+                        st.markdown(f"**{item}**")
+                        st.caption(desc)
+                    elif len(item) == 2:
+                        # 2. 2글자 간지(예: '갑자')인 경우 각각 분리해서 검색
+                        stem, branch = item[0], item[1]
+                        stem_desc = SAJU_TERMS.get(stem)
+                        branch_desc = SAJU_TERMS.get(branch)
+                        
+                        if stem_desc or branch_desc:
+                            st.markdown(f"**{item} ({stem}+{branch})**")
+                            if stem_desc: st.caption(f"**{stem}**: {stem_desc}")
+                            if branch_desc: st.caption(f"**{branch}**: {branch_desc}")
+                        else:
+                            st.markdown(f"**{item}**")
+                            st.caption("상세 정보가 구축 중입니다.")
+                    else:
+                        st.markdown(f"**{item}**")
+                        st.caption("상세 정보가 구축 중입니다.")
+                        
                     if len(items) > 1:
                         st.divider()
 
