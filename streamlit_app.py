@@ -116,6 +116,7 @@ def initialize_saju_engine(api_key):
 # --- UI 레이아웃 ---
 
 def main():
+    now_year = datetime.datetime.now().year
     if not os.path.exists("data"):
         os.makedirs("data", exist_ok=True)
         
@@ -260,7 +261,6 @@ def main():
             # 현재 대운 기간의 시작 연도 계산
             birth_year = int(data.get('birth_date', '1990-01-01').split('-')[0])
             # 현재 나이에 해당하는 대운 찾기
-            now_year = datetime.datetime.now().year
             korean_age = now_year - birth_year + 1
             
             # 현재 나이가 포함된 대운의 시작 나이 찾기
