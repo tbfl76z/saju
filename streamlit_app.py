@@ -372,6 +372,8 @@ def main():
             model = initialize_saju_engine(api_key)
             with st.status("대가의 식견으로 당신의 운명을 통찰하는 중...", expanded=True) as status:
                 try:
+                    name_str = st.session_state.get('target_name', '사용자')
+                    gender_str = st.session_state.get('target_gender', '여')
                     selected_daeun_info = next((d for d in data['fortune']['list'] if d['age'] == st.session_state.get('selected_daeun_age')), data['fortune']['list'][0])
                     
                     saju_summary = f"""
