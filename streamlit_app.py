@@ -62,6 +62,40 @@ st.markdown("""
     .saju-table td { border: 1px solid #dee2e6; padding: 10px; color: #333; }
     .pillar-cell { font-size: 1.2rem; font-weight: bold; }
     .ten-god { color: #d4af37; font-size: 0.9rem; }
+    
+    /* 모바일 가로 레이아웃 유지 */
+    @media (max-width: 768px) {
+        [data-testid="stHorizontalBlock"] {
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            gap: 10px !important;
+            padding-bottom: 10px;
+        }
+        [data-testid="column"] {
+            min-width: 140px !important;
+            flex: 0 0 auto !important;
+            width: auto !important;
+        }
+    }
+    
+    /* 공유 버튼 스타일 */
+    .share-btn {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        background-color: #2c3e50;
+        color: white !important;
+        text-align: center;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: bold;
+        margin-top: 15px;
+        cursor: pointer;
+        border: none;
+        transition: background 0.3s;
+    }
+    .share-btn:hover { background-color: #34495e; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -610,68 +644,184 @@ def main():
 
         st.divider()
         
-        # 추가 질문 및 심층 분석 버튼
-        add_query = st.text_input("AI 명리 대가에게 특별히 궁금한 점", placeholder="예: 구체적인 올해 건강운이나 이사운이 궁금합니다.")
+        # --- AI 심층 분석 섹션 (5단계 전문 버튼) ---
+        st.subheader("🔮 AI 명리 대가 전문 분석")
         
-        if st.button("심층 분석 보고서 생성 시작"):
+        # 버튼 스타일링 (그리드 레이아웃)
+        add_query = st.text_input("AI 대가에게 특별히 궁금한 점 (선택 사항)", placeholder="예: 구체적인 건강운이나 조언이 궁금합니다.")
+        
+        b1, b2, b3 = st.columns(3)
+        b4, b5, _ = st.columns(3)
+        
+        analysis_type = None
+        if b1.button("📜 전체사주보기", use_container_width=True): analysis_type = "total"
+        if b2.button("🌿 사주원국 해석", use_container_width=True): analysis_type = "original"
+        if b3.button("🌊 선택한 대운 분석", use_container_width=True): analysis_type = "daeun"
+        if b4.button("🎢 선택한 세운 분석", use_container_width=True): analysis_type = "seyun"
+        if b5.button("🗓️ 선택한 월운 분석", use_container_width=True): analysis_type = "wolun"
+        
+        if analysis_type:
             if not api_key:
-                st.error("API 키가 설정되지 않았습니다. 개발자에게 문의하세요.")
+                st.error("API 키가 설정되지 않았습니다.")
                 return
                 
             model = initialize_saju_engine(api_key)
-            with st.status("대가의 식견으로 당신의 운명을 통찰하는 중...", expanded=True) as status:
+            with st.status("대가의 식견으로 분석 중입니다...", expanded=True) as status:
                 try:
                     name_str = st.session_state.get('target_name', '사용자')
                     gender_str = st.session_state.get('target_gender', '여')
-                    selected_daeun_info = next((d for d in data['fortune']['list'] if d['age'] == st.session_state.get('selected_daeun_age')), data['fortune']['list'][0])
+                    birth_year = int(data['birth_date'].split('-')[0])
+                    cur_age = now_year - birth_year + 1
                     
-                    saju_summary = f"""
-                    [대상자] {name_str} ({gender_str}), 현재 나이: {now_year - int(data['birth_date'].split('-')[0]) + 1}세
-                    [양력 생일] {data['birth_date']} {data['birth_time']}
-                    [사주 4주] 연:{pillars['year']['pillar']}, 월:{pillars['month']['pillar']}, 일:{pillars['day']['pillar']}, 시:{pillars['hour']['pillar']}
-                    [오행분포] {elems}
-                    [공망] 년:{data['gongmang']['year']}, 일:{data['gongmang']['day']}
-                    [신살 및 관계] {data['sinsal']}, {data['relations']}
+                    # 1. 공통 사주 기초 정보
+                    basic_info = f"""
+[사주 정보]
+- 성별: {gender_str}
+- 생년월일시: (양) {data['birth_date']} {data['birth_time']}
+- 사주팔자: 년주({pillars['year']['pillar']}), 월주({pillars['month']['pillar']}), 일주({pillars['day']['pillar']}), 시주({pillars['hour']['pillar']})
+- 십성: 년간({pillars['year'].get('stem_ten_god','-')}), 년지({pillars['year'].get('branch_ten_god','-')}), 월간({pillars['month'].get('stem_ten_god','-')}), 월지({pillars['month'].get('branch_ten_god','-')}), 일지({pillars['day'].get('branch_ten_god','-')}), 시간({pillars['hour'].get('stem_ten_god','-')}), 시지({pillars['hour'].get('branch_ten_god','-')})
+- 십이운성: 년지({pillars['year'].get('twelve_growth','-')}), 월지({pillars['month'].get('twelve_growth','-')}), 일지({pillars['day'].get('twelve_growth','-')}), 시지({pillars['hour'].get('twelve_growth','-')})
+- 오행 분포: 木 {elems.get('木',0)}, 火 {elems.get('火',0)}, 土 {elems.get('土',0)}, 金 {elems.get('金',0)}, 水 {elems.get('水',0)}
+"""
                     
-                    [핵심 분석 대상 - 임의 선택 또는 현재 대운] {selected_daeun_info['age']}세 대운 ({selected_daeun_info['ganzhi']})
-                    [현재 분석 기준 연도] {sel_year}년 ({cur_seyun['ganzhi'] if cur_seyun else 'N/A'})
+                    # 2. 분석 타입별 맞춤 프롬프트 구성
+                    prompt = ""
+                    common_instr = "본 분석은 데스티니 코드 정밀한 로직으로 산출된 데이터를 바탕으로 합니다. 제공된 사주 정보는 검증된 값이므로 다시 계산하지 말고, 이 데이터를 절대적 기준으로 해석하십시오. 답변 시작 시 '데스티니 코드 앱의 데이터를 바탕으로 해석함을 가볍게 언급하며, 전문가의 품격에 맞는 존댓말로 답변해 주십시오."
                     
-                    **분석 가이드:**
-                    1. 과거 대운보다는 **현재 나이({now_year - int(data['birth_date'].split('-')[0]) + 1}세)**와 **현재 진행 중인 대운({selected_daeun_info['ganzhi']})**의 관계를 최우선적으로 해석하십시오.
-                    2. 특히 선택된 분석 기준 연도({sel_year}년)의 세운과 월별 흐름이 사용자의 인생 여정에서 어떤 의미를 갖는지 구체적으로 조언하십시오.
-                    """
-                    
-                    prompt = f"""
-                    {saju_summary}
-                    [사용자 추가 질문] {add_query if add_query else '전체적인 인생의 흐름과 운세 분석 부탁드립니다.'}
-                    
-                    위 사주 명식을 바탕으로 당신이 가진 전문 명리 지식(PDF)을 활용하여 분석하되, 
-                    **일반인도 한눈에 이해할 수 있도록 친절하고 쉬운 비유**를 사용하여 보고서를 작성해 주세요.
-                    
-                    보고서 구성 필수 항목:
-                    1. 🖼️ **운명의 풍경**: 이 사주의 구성을 한 폭의 그림이나 풍경으로 묘사해 주세요.
-                    2. 🌱 **나의 본 모습**: 비유를 통해 타고난 성정과 기질, 장단점을 쉽게 설명해 주세요.
-                    3. 🎢 **대운과 세운의 흐름**: 현재 대운(10년 주기)과 올해 세운, 그리고 월별 흐름을 종합하여 날씨나 계절 변화에 비유하여 알려주세요.
-                    4. 💡 **대가의 조언**: 일상에서 실천할 수 있는 구체적이고 따뜻한 조언을 담아주세요.
-                    
-                    *반드시 수필처럼 유려한 한글 문체로 작성하며, 전문 용어가 나올 경우 반드시 쉬운 풀이를 덧붙여 주십시오.*
-                    """
+                    if analysis_type == "total":
+                        prompt = f"""
+{basic_info}
+[질문 사항]
+{add_query if add_query else '전체적인 인생 흐름 분석 부탁드립니다.'}
+
+위 사주 명식을 비유와 통찰을 담아 종합적으로 분석해 보고서 형식으로 작성해 주세요. (가독성 높은 구성 필수)
+"""
+                    elif analysis_type == "original":
+                        prompt = f"""
+{basic_info}
+[질문 사항]
+위 데이터를 바탕으로 명리학 전문가의 관점에서 다음 사항을 상세히 분석해 주십시오.
+1. 일간과 일주를 중심으로 본연의 기질과 중심 성격을 설명해 주십시오.
+2. 월지에 배정된 기운과 전체적인 십성의 흐름을 바탕으로, 이 사주가 사회에서 어떤 환경에 놓이기 쉬우며 어떤 방식으로 역량을 발휘하는지 분석해 주십시오.
+3. 주어진 십성 구성에서 나타나는 특징적인 장단점과 그에 따른 인생 흐름의 특성을 분석해 주십시오.
+4. 제공된 오행 분포 수치를 절대적 기준으로 삼아, 부족하거나 과한 기운을 조절할 수 있는 실생활의 보완책(색상, 습관 등)을 제안해 주십시오.
+5. 재물운, 연애·결혼운, 직업 적성, 건강운 등 주요 영역을 주어진 데이터를 근거로 종합 해석해 주십시오.
+6. 전체적인 사주 구성의 균형을 맞추기 위해 이 사주가 지향해야 할 삶의 태도와 핵심적인 조언을 들려주십시오.
+"""
+                    elif analysis_type == "daeun":
+                        sel_age = st.session_state.get('selected_daeun_age')
+                        sel_daeun = next((d for d in data['fortune']['list'] if d['age'] == sel_age), data['fortune']['list'][0])
+                        prompt = f"""
+{basic_info}
+[대운 정보]
+- 시작되는 나이: {sel_daeun['age']} 세
+- 대운 간지: {sel_daeun['ganzhi']}
+- 십성: {sel_daeun.get('stem_ten_god','-')}(천간) / {sel_daeun.get('branch_ten_god','-')}(지지)
+- 십이운성: {sel_daeun.get('twelve_growth','-')}
+
+[질문 사항]
+위 데이터를 바탕으로 명리학 전문가의 관점에서 다음 사항을 상세히 분석해 주십시오.
+1. 현재 지나고 있는 '대운'의 간지와 십성 정보를 바탕으로, 이 시기가 사주 원국에 가져오는 전반적인 운의 흐름과 환경 변화를 분석해 주십시오.
+2. 제공된 대운의 십성(천간/지지)과 12운성 수치를 절대적 근거로 삼아, 이 시기에 나타날 사회적 성취 가능성과 심리적 변화를 심층 설명해 주십시오.
+3. 이 대운 기간 동안의 직업 및 재물운, 그리고 건강과 대인관계를 포함한 개인적 삶의 영역에서 예상되는 주요 변화를 분석해 주십시오.
+4. 명리학 전문가의 관점에서 이 시기에 반드시 잡아야 할 기회와, 특별히 주의하거나 보완해야 할 점을 구체적으로 조언해 주십시오.
+5. 본 대운이 다음 대운으로 넘어가는 과정에서 이 사주가 가져야 할 마음가짐과 현실적인 행동 지침을 들려주십시오.
+"""
+                    elif analysis_type == "seyun":
+                        sel_age = st.session_state.get('selected_daeun_age')
+                        sel_daeun = next((d for d in data['fortune']['list'] if d['age'] == sel_age), data['fortune']['list'][0])
+                        sel_year = st.session_state.get('selected_seyun_year', now_year)
+                        sel_seyun = next((s for s in seyun_list if s['year'] == sel_year), seyun_list[0])
+                        prompt = f"""
+{basic_info}
+[현재 대운 정보]
+- 나이: {sel_daeun['age']} 세 ~
+- 간지: {sel_daeun['ganzhi']}
+- 십성: {sel_daeun.get('stem_ten_god','-')}(천간) / {sel_daeun.get('branch_ten_god','-')}(지지)
+- 십이운성: {sel_daeun.get('twelve_growth','-')}
+
+[세운 정보]
+- 세운 년도: {sel_year}년
+- 세운 간지: {sel_seyun['ganzhi']}
+- 십성: {sel_seyun.get('stem_ten_god','-')}(천간) / {sel_seyun.get('branch_ten_god','-')}(지지)
+- 십이운성: {sel_seyun.get('twelve_growth','-')}
+
+[질문 사항]
+위 데이터를 바탕으로 명리학 전문가의 관점에서 다음 사항을 상세히 분석해 주십시오.
+1. 위의 세운 정보를 바탕으로, 올해가 사주 원국 및 현재 대운과 상호작용하여 만들어내는 핵심 운의 흐름을 분석해 주십시오.
+2. 제공된 세운의 십성과 12운성 기운을 절대적 근거로 하여, 직업, 재물, 대인관계, 건강 등 실생활 영역의 변화를 설명해 주십시오.
+3. 올해 가장 주목해야 할 긍정적인 기회와 전문가적 관점에서 주의가 필요한 리스크를 짚어 주십시오.
+4. 올해의 기운을 가장 현명하게 활용하기 위해 취해야 할 구체적인 태도와 행동 지침을 조언해 주십시오.
+"""
+                    elif analysis_type == "wolun":
+                        sel_year = st.session_state.get('selected_seyun_year', now_year)
+                        cur_seyun = next((s for s in seyun_list if s['year'] == sel_year), seyun_list[0])
+                        from saju_utils import get_wolun_data
+                        target_month = datetime.datetime.now().month
+                        wolun_data = get_wolun_data(pillars['day']['stem'], pillars['year']['branch'], cur_seyun['ganzhi'], target_month, pillars, pillars['day']['branch'])
+                        
+                        prompt = f"""
+{basic_info}
+[현재 대운 정보]
+- 간지: {sel_daeun['ganzhi']}
+- 십성: {sel_daeun.get('stem_ten_god','-')}(천간) / {sel_daeun.get('branch_ten_god','-')}(지지)
+
+[현재 세운 정보]
+- 년도: {sel_year}년
+- 세운 간지: {cur_seyun['ganzhi']}
+- 십성: {cur_seyun.get('stem_ten_god','-')}(천간) / {cur_seyun.get('branch_ten_god','-')}(지지)
+
+[월운 정보]
+- 년월: {sel_year}년 {target_month}월
+- 월운 간지: {wolun_data['ganzhi']}
+- 십성: {wolun_data['stem_ten_god']}(천간) / {wolun_data['branch_ten_god']}(지지)
+- 십이운성: {wolun_data['twelve_growth']} (일간 기준)
+
+[질문 사항]
+위 데이터를 바탕으로 명리학 전문가의 관점에서 다음 사항을 상세히 분석해 주십시오.
+1. 월운 간지와 십성, 12운성 정보를 바탕으로, 이번 달이 전체적인 세운 흐름 속에서 어떤 구체적인 변곡점이 되는지 분석해 주십시오.
+2. 제공된 월운의 십성 기운을 절대적 기준으로 삼아, 이번 달 직업적 성과, 재물 흐름, 대인관계의 변화를 실질적인 관점에서 설명해 주십시오.
+3. 이번 달에 특히 집중해야 할 긍정적인 기회와, 예기치 않게 발생할 수 있는 부정적인 변수를 관리하기 위한 현실적인 조언을 제시해 주십시오.
+4. 해당 월의 12운성 기운이 시사하는 심리적 상태를 고려하여, 이번 한 달을 가장 후회 없이 보낼 수 있는 핵심 행동 지침을 들려주십시오.
+"""
+
+                    full_prompt = f"{common_instr}\n\n{prompt}"
                     
                     if st.session_state.get('is_cached', False):
-                        response = model.generate_content(prompt)
+                        response = model.generate_content(full_prompt)
                     else:
-                        response = model.generate_content([prompt] + st.session_state.get('uploaded_file_objects', []))
+                        response = model.generate_content([full_prompt] + st.session_state.get('uploaded_file_objects', []))
                     
                     if response and response.text:
                         st.balloons()
-                        status.update(label="분석이 모두 완료되었습니다.", state="complete", expanded=False)
+                        status.update(label="분석이 완료되었습니다.", state="complete", expanded=False)
                         st.divider()
-                        st.markdown(f"## {name_str}님을 위한 심층 운명 보고서")
-                        st.markdown(f"<div class='result-container'>{response.text}</div>", unsafe_allow_html=True)
+                        st.markdown(f"### 📑 {name_str}님을 위한 전문가 분석 리포트")
+                        st.markdown(f"<div class='result-container' id='report-text'>{response.text}</div>", unsafe_allow_html=True)
+                        
+                        report_content = response.text.replace("'", "\\'").replace("\n", "\\n")
+                        copy_js = f"""
+                        <script>
+                        function copyReport() {{
+                            const text = `{report_content}`;
+                            const textArea = document.createElement("textarea");
+                            textArea.value = text;
+                            document.body.appendChild(textArea);
+                            textArea.select();
+                            try {{
+                                document.execCommand('copy');
+                                alert('보고서가 클립보드에 복사되었습니다.');
+                            }} catch (err) {{ }}
+                            document.body.removeChild(textArea);
+                        }}
+                        </script>
+                        <button onclick="copyReport()" class="share-btn">📋 분석 결과 복사하여 공유하기</button>
+                        """
+                        st.components.v1.html(copy_js, height=70)
                     else:
-                        st.error("분석 결과를 도출하지 못했습니다.")
+                        st.error("결과를 도출하지 못했습니다.")
                 except Exception as e:
-                    st.error(f"분석 중 오류 발생: {str(e)}")
+                    st.error(f"오류 발생: {str(e)}")
 
 
 
