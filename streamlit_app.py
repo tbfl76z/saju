@@ -63,19 +63,46 @@ st.markdown("""
     .pillar-cell { font-size: 1.2rem; font-weight: bold; }
     .ten-god { color: #d4af37; font-size: 0.9rem; }
     
-    /* 모바일 가로 레이아웃 유지 */
+    /* 모바일 한 화면 보기(Condensed View) 최적화 */
     @media (max-width: 768px) {
+        html, body, [data-testid="stAppViewContainer"] {
+            font-size: 0.85rem !important;
+        }
+        .main .block-container {
+            padding-left: 0.5rem !important;
+            padding-right: 0.5rem !important;
+            padding-top: 1rem !important;
+        }
         [data-testid="stHorizontalBlock"] {
-            flex-direction: row !important;
-            flex-wrap: nowrap !important;
-            overflow-x: auto !important;
-            gap: 10px !important;
-            padding-bottom: 10px;
+            gap: 0.3rem !important;
         }
         [data-testid="column"] {
-            min-width: 140px !important;
-            flex: 0 0 auto !important;
-            width: auto !important;
+            min-width: 0 !important;
+            flex: 1 1 0% !important;
+            padding: 0 !important;
+        }
+        /* 명식표 글자 크기 더 축소 */
+        .pillar-cell { font-size: 0.95rem !important; }
+        .ten-god { font-size: 0.75rem !important; }
+        .saju-table td { padding: 4px !important; }
+        
+        /* 카드형 요소 고밀도화 */
+        div[style*="border-radius:12px"] {
+            padding: 8px !important;
+            margin-bottom: 4px !important;
+        }
+        div[style*="font-size:1.6rem"], div[style*="font-size:1.4rem"] {
+            font-size: 1.1rem !important;
+        }
+        div[style*="font-size:0.9rem"], div[style*="font-size:0.85rem"] {
+            font-size: 0.7rem !important;
+        }
+        
+        /* 버튼 크기 조정 */
+        .stButton button {
+            padding: 2px 5px !important;
+            font-size: 0.75rem !important;
+            min-height: 25px !important;
         }
     }
     
@@ -83,17 +110,17 @@ st.markdown("""
     .share-btn {
         display: block;
         width: 100%;
-        padding: 12px;
+        padding: 10px;
         background-color: #2c3e50;
         color: white !important;
         text-align: center;
         text-decoration: none;
         border-radius: 8px;
         font-weight: bold;
-        margin-top: 15px;
+        margin-top: 10px;
         cursor: pointer;
         border: none;
-        transition: background 0.3s;
+        font-size: 0.9rem;
     }
     .share-btn:hover { background-color: #34495e; }
 </style>
@@ -631,9 +658,15 @@ def main():
                                      cur_seyun.get('ganzhi', '甲子'), m, 
                                      pillars=pillars, 
                                      day_branch=pillars.get('day', {}).get('branch', '丑'))
+                
+                selected_month = st.session_state.get('selected_wolun_month', datetime.datetime.now().month)
+                is_sel_month = selected_month == m
+                border_color = "#ffc107" if is_sel_month else "#f0f0f0"
+                bg_color = "#fffdf0" if is_sel_month else "#fff"
+                
                 with w_cols[(m-1) % 4]:
                     st.markdown(f"""
-                    <div style='border:1px solid #f0f0f0; padding:10px; border-radius:12px; text-align:center; background-color:#fff; margin-bottom:10px; border-left:4px solid #ffc107;'>
+                    <div style='border:2px solid {border_color}; padding:8px; border-radius:12px; text-align:center; background-color:{bg_color}; margin-bottom:5px; border-left:4px solid #ffc107;'>
                         <div style='font-size:0.85rem; font-weight:bold; color:#666;'>{m}월</div>
                         <div style='font-size:1.3rem; font-weight:bold; color:#2c3e50;'>{wolun.get('ganzhi', '-')}</div>
                         <div style='font-size:0.8rem; color:#d63384;'>{wolun.get('stem_ten_god', '-')} | {wolun.get('branch_ten_god', '-')}</div>
@@ -641,6 +674,9 @@ def main():
                         <div style='font-size:0.7rem; color:#198754;'>{wolun.get('sinsal', '-')}</div>
                     </div>
                     """, unsafe_allow_html=True)
+                    if st.button(f"{m}월 선택", key=f"btn_month_{m}", use_container_width=True):
+                        st.session_state['selected_wolun_month'] = m
+                        st.rerun()
 
         st.divider()
         
@@ -757,7 +793,7 @@ def main():
                         sel_year = st.session_state.get('selected_seyun_year', now_year)
                         cur_seyun = next((s for s in seyun_list if s['year'] == sel_year), seyun_list[0])
                         from saju_utils import get_wolun_data
-                        target_month = datetime.datetime.now().month
+                        target_month = st.session_state.get('selected_wolun_month', datetime.datetime.now().month)
                         wolun_data = get_wolun_data(pillars['day']['stem'], pillars['year']['branch'], cur_seyun['ganzhi'], target_month, pillars, pillars['day']['branch'])
                         
                         prompt = f"""
