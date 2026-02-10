@@ -268,7 +268,6 @@ def main():
         data = st.session_state['saju_data']
         pillars = data['pillars']
         
-        st.subheader("🔮 사주 4주 명식")
         from saju_data import SAJU_TERMS
 
         def term_popover(label, value, key_suffix):
@@ -357,62 +356,23 @@ def main():
                             st.markdown(f"**{clean_val}**")
                             st.caption(desc)
 
-        # --- 사주 4주 명식 (이미지 2 스타일로 구현) ---
-        st.subheader("🔮 사주 4주 명식")
+        # --- 사주 4주 명식 (이미지 2 스타일로 통합) ---
+        p_keys = ['hour', 'day', 'month', 'year']
+        p_headers = ["시주(時)", "일주(日)", "월주(月)", "연주(년)"]
+        p_row_labels = ["사주원국 간지", "해당 기둥 십성", "기둥별 12운성"]
         
-        # 안내 문구 박스
-        st.markdown("<div class='analysis-summary-box'>당신의 타고난 기운인 사주(4주 8자) 명식입니다. 각 항목을 클릭하여 상세한 풀이를 확인해보세요.</div>", unsafe_allow_html=True)
-        
-        headers = ["시주(時)", "일주(日)", "월주(月)", "연주(년)"]
-        rows = [
-            ("천간", [
-                (data['ten_gods']['hour'], pillars['hour']['stem']),
-                (data['ten_gods']['day'], pillars['day']['stem']),
-                (data['ten_gods']['month'], pillars['month']['stem']),
-                (data['ten_gods']['year'], pillars['year']['stem'])
-            ]),
-            ("지지", [
-                ("시지", pillars['hour']['branch'], data['jiji_ten_gods']['hour']),
-                ("일지", pillars['day']['branch'], data['jiji_ten_gods']['day']),
-                ("월지", pillars['month']['branch'], data['jiji_ten_gods']['month']),
-                ("연지", pillars['year']['branch'], data['jiji_ten_gods']['year'])
-            ]),
-            ("12운성", [
-                ("시주", data['twelve_growth']['hour']),
-                ("일주", data['twelve_growth']['day']),
-                ("월주", data['twelve_growth']['month']),
-                ("연주", data['twelve_growth']['year'])
-            ])
+        # 십성은 천간/지지 합쳐서 표시하거나 각각 구분
+        p_grid = [
+            [pillars[k]['pillar'] for k in p_keys],
+            [f"{data['ten_gods'][k]} | {data['jiji_ten_gods'][k]}" for k in p_keys],
+            [data['twelve_growth'][k] for k in p_keys]
         ]
         
-        # 헤더 출력
-        h_cols = st.columns([1.2] + [1] * 4)
-        h_cols[0].markdown("<div style='background:#f1f3f5; border-radius:8px; padding:8px; text-align:center; font-weight:bold; font-size:0.8rem;'>구분</div>", unsafe_allow_html=True)
-        for i, h in enumerate(headers):
-            h_cols[i+1].markdown(f"<div style='background:#f1f3f5; border-radius:8px; padding:8px; text-align:center; font-weight:bold; font-size:0.8rem;'>{h}</div>", unsafe_allow_html=True)
-            
-        # 데이터 행 출력
-        for r_idx, (r_label, r_data) in enumerate(rows):
-            r_cols = st.columns([1.2] + [1] * 4)
-            r_cols[0].markdown(f"<div style='background:#f8f9fa; border-radius:8px; padding:10px; font-weight:bold; font-size:0.8rem; height:100%; display:flex; align-items:center;'>{r_label}</div>", unsafe_allow_html=True)
-            for c_idx, cell_data in enumerate(r_data):
-                with r_cols[c_idx+1]:
-                    if r_label == "천간":
-                        tg, stem = cell_data
-                        label_val = f"{tg}\n{stem}"
-                        lookup_key = stem
-                    elif r_label == "지지":
-                        label, branch, jtg = cell_data
-                        label_val = f"{branch}\n{jtg}"
-                        lookup_key = branch
-                    else: # 12운성
-                        unit, growth = cell_data
-                        label_val = growth
-                        lookup_key = growth
-                        
-                    with st.popover(label_val, use_container_width=True):
-                        st.markdown(f"**{lookup_key}**")
-                        st.caption(SAJU_TERMS.get(lookup_key, "상세 정보가 준비 중입니다."))
+        render_analysis_table(
+            "사주 4주 명식",
+            "당신의 타고난 기운인 사주(4주 8자) 명식입니다. 각 항목을 클릭하여 상세한 풀이를 확인해보세요.",
+            p_row_labels, p_headers, p_grid
+        )
         
         # 공망 및 지지 관계 표시
         col_g1, col_g2 = st.columns(2)
@@ -426,39 +386,41 @@ def main():
         elems = data['five_elements']
         st.subheader("☯️ 오행의 기운 분포")
         
-        cols = st.columns(5)
+        o_cols = st.columns(5)
         for idx, (el, val) in enumerate(elems.items()):
-            cols[idx].metric(el, f"{val}개")
-            # 시각적 강도 표시 (8개를 만점으로 가정)
+            o_cols[idx].metric(el, f"{val}개")
             progress_val = min(val / 8, 1.0)
-            cols[idx].progress(progress_val)
+            o_cols[idx].progress(progress_val)
 
-        # 대운 리스트 - 이미지 4 스타일 (버튼 상단 배치, 고밀도 카드)
+        # --- 대운 리스트 (이미지 1 스타일, 5열 그리드 강제) ---
         daeun_info = data['fortune']
         st.subheader("📅 대운(大運)의 흐름")
-        st.write(f"현재 대운수: **{daeun_info['num']}** ({daeun_info['direction']})")
+        st.caption(f"현재 대운수: **{daeun_info['num']}** ({daeun_info['direction']})")
         
-        for item in data['fortune']['list']:
-            age_val = item.get('age', 0)
-            is_sel_daeun = st.session_state.get('selected_daeun_age') == age_val
-            
-            # 카드 렌더링 (이미지 1 스타일)
-            render_saju_card(
-                f"{age_val}세 대운",
-                item.get('ganzhi', '-'),
-                item.get('stem_ten_god', '-'),
-                item.get('branch_ten_god', '-'),
-                item.get('twelve_growth', '-'),
-                f"신살: {item.get('sinsal', '-')}",
-                f"관계: {item.get('relations', '-')}",
-                is_sel_daeun
-            )
-            
-            if st.button(f"{age_val}세 대운 선택", key=f"btn_daeun_{age_val}", use_container_width=True):
-                st.session_state['selected_daeun_age'] = age_val
-                birth_year = int(data.get('birth_date', '1990-01-01').split('-')[0])
-                st.session_state['selected_seyun_year'] = birth_year + age_val - 1
-                st.rerun()
+        daeun_list = data['fortune']['list']
+        for i in range(0, len(daeun_list), 5):
+            d_cols = st.columns(5)
+            chunk = daeun_list[i:i+5]
+            for idx, item in enumerate(chunk):
+                age_val = item.get('age', 0)
+                is_sel_daeun = st.session_state.get('selected_daeun_age') == age_val
+                
+                with d_cols[idx]:
+                    render_saju_card(
+                        f"{age_val}세 대운",
+                        item.get('ganzhi', '-'),
+                        item.get('stem_ten_god', '-'),
+                        item.get('branch_ten_god', '-'),
+                        item.get('twelve_growth', '-'),
+                        f"신살: {item.get('sinsal', '-')}",
+                        f"관계: {item.get('relations', '-')}",
+                        is_sel_daeun
+                    )
+                    if st.button(f"{age_val}세 선택", key=f"btn_daeun_grid_{age_val}", use_container_width=True):
+                        st.session_state['selected_daeun_age'] = age_val
+                        birth_year = int(data.get('birth_date', '1990-01-01').split('-')[0])
+                        st.session_state['selected_seyun_year'] = birth_year + age_val - 1
+                        st.rerun()
 
         # --- 대운 상세 상호작용 분석 섹션 (NEW) ---
         if 'selected_daeun_age' in st.session_state:
