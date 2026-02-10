@@ -56,50 +56,26 @@ st.markdown("""
         margin: 0 auto !important;
     }
     
-    /* 모바일 강용 수평 컨테이너 (st.columns 대신 특정 분석 테이블에서만 사용) */
-    .saju-horizontal-wrapper {
-        display: flex !important;
+    /* [핵심] 모바일/PC 구분 없이 모든 컬럼 컨테이너를 수평 가로로 강제 고정 */
+    div[data-testid="stHorizontalBlock"] {
         flex-direction: row !important;
         flex-wrap: nowrap !important;
-        overflow-x: auto !important; /* 공간 부족 시 수평 스크롤 허용 */
-        gap: 5px !important;
+        align-items: stretch !important;
         width: 100% !important;
-        padding-bottom: 10px;
+        overflow-x: auto !important; /* 내용이 넘칠 경우 수평 스크롤 허용 */
+        gap: 8px !important;
     }
-    .saju-horizontal-item {
-        flex: 1 0 0% !important;
-        min-width: 65px !important; /* 최소 너비 확보로 찌그러짐 방지 */
-    }
-    .saju-horizontal-item-label {
-        flex: 1.5 0 0% !important;
-        min-width: 90px !important;
+    
+    /* 각 컬럼의 최소 너비 확보하여 찌그러짐 방지 */
+    div[data-testid="column"] {
+        flex: 1 1 0% !important;
+        min-width: 70px !important; /* 분석 표 버튼이 깨지지 않는 최소 너비 */
     }
 
-    /* 특정 테이블 및 그리드만 수평 고정 (전역 파편화 방지) */
-    .saju-horizontal-table-fixed div[data-testid="stHorizontalBlock"] {
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        width: 100% !important;
-    }
-    .saju-horizontal-table-fixed div[data-testid="column"] {
-        flex: 1 0 0% !important;
-        min-width: 65px !important;
-    }
-    .saju-horizontal-table-fixed div[data-testid="stHorizontalBlock"] > div:first-child {
-        flex: 1.5 0 0% !important;
-        min-width: 90px !important;
-    }
-
-    .saju-horizontal-grid-fixed div[data-testid="stHorizontalBlock"] {
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        width: 100% !important;
-        overflow-x: auto !important; /* 모바일에서 좌우 스크롤 허용 */
-        padding-bottom: 10px;
-    }
-    .saju-horizontal-grid-fixed div[data-testid="column"] {
-        flex: 0 0 120px !important; /* 카드 너비 고정 */
-        min-width: 120px !important;
+    /* 상세 분석 표의 첫 번째 '분석 항목' 열 너비 비율 조정 */
+    /* st.columns([1.5, 1, 1, 1, 1]) 가 설정되어 있어도 CSS로 확실히 보장 */
+    div[data-testid="stHorizontalBlock"] > div:first-child {
+        min-width: 95px !important;
     }
     
     @media (max-width: 641px) {
@@ -107,6 +83,7 @@ st.markdown("""
             padding-left: 10px !important;
             padding-right: 10px !important;
         }
+        /* 모바일 팝업 버튼 텍스트 크기 미세 조정 */
         div[data-testid="stPopover"] > button {
             font-size: 0.7rem !important;
             padding: 4px 2px !important;
@@ -431,31 +408,28 @@ def main():
             """, unsafe_allow_html=True)
 
         def render_analysis_table(title, instruction, row_labels, column_headers, data_grid):
-            """이미지 2 스타일의 상세 분석 테이블 (수평 고정)"""
+            """이미지 2 스타일의 상세 분석 테이블 (전역 CSS에 의해 수평 고정)"""
             st.markdown(f"### 🔍 {title} 🔗")
             st.markdown(f"<div class='analysis-summary-box'>{instruction}</div>", unsafe_allow_html=True)
             
-            # 커스텀 컨테이너 시작 (CSS에서 수평 고정 제어)
-            st.markdown('<div class="saju-horizontal-table-fixed">', unsafe_allow_html=True)
-            
-            # 헤더 행
+            # 테이블 헤더
             cols = st.columns([1.5] + [1] * len(column_headers))
             cols[0].markdown(f"<div style='background:#f1f3f5; border-radius:8px; padding:12px; text-align:center; font-weight:bold; font-size:0.85rem; color:#4b5563;'>분석 항목</div>", unsafe_allow_html=True)
             for i, header in enumerate(column_headers):
                 cols[i+1].markdown(f"<div style='background:#f1f3f5; border-radius:8px; padding:12px; text-align:center; font-weight:bold; font-size:0.85rem; color:#4b5563;'>{header}</div>", unsafe_allow_html=True)
             
-            # 데이터 행들
+            # 데이터 행
             for row_idx, label in enumerate(row_labels):
                 cols = st.columns([1.5] + [1] * len(column_headers))
                 cols[0].markdown(f"<div style='background:#f8f9fa; border-radius:8px; padding:14px 10px; font-weight:bold; font-size:0.8rem; height:100%; display:flex; align-items:center; color:#6b7280;'>{label}</div>", unsafe_allow_html=True)
                 for col_idx, value in enumerate(data_grid[row_idx]):
                     with cols[col_idx+1]:
+                        # 팝업 내부에 상세 설명 표시 (SAJU_TERMS 연동)
                         clean_val = value.replace(" ˅", "").strip()
                         with st.popover(value if value != "-" else " - ", use_container_width=True):
                             desc = SAJU_TERMS.get(clean_val, "상세 정보가 준비 중입니다.")
                             st.markdown(f"**{clean_val}**")
                             st.caption(desc)
-            st.markdown('</div>', unsafe_allow_html=True)
 
         # --- 사주 4주 명식 (이미지 2 스타일로 통합) ---
         p_keys = ['hour', 'day', 'month', 'year']
@@ -527,7 +501,6 @@ def main():
                         birth_year = int(data.get('birth_date', '1990-01-01').split('-')[0])
                         st.session_state['selected_seyun_year'] = birth_year + age_val - 1
                         st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
 
         # --- 대운 상세 상호작용 분석 섹션 (NEW) ---
         if 'selected_daeun_age' in st.session_state:
@@ -625,7 +598,6 @@ def main():
 
         if seyun_list:
             st.subheader(f"📅 세운(年運): {seyun_start_year}년 ~ {seyun_start_year+9}년")
-            st.markdown('<div class="saju-horizontal-grid-fixed">', unsafe_allow_html=True)
             for i in range(0, len(seyun_list), 5):
                 s_cols = st.columns(5)
                 chunk = seyun_list[i:i+5]
@@ -648,7 +620,6 @@ def main():
                         if st.button(f"{s_year}년 선택", key=f"btn_year_{s_year}", use_container_width=True):
                             st.session_state['selected_seyun_year'] = s_year
                             st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
 
             # --- 세운 상세 상호작용 분석 섹션 (NEW) ---
             if 'selected_seyun_year' in st.session_state:
@@ -737,7 +708,6 @@ def main():
             # 선택된 연도 세운 정보 찾기
             cur_seyun = next((s for s in seyun_list if s['year'] == sel_year), seyun_list[0] if seyun_list else {})
             
-            st.markdown('<div class="saju-horizontal-grid-fixed">', unsafe_allow_html=True)
             # 월운(Wolun) 시각화 - 5열 그리드로 통일 (이미지 4, 6 스타일 계승)
             for i in range(1, 13, 5):
                 w_cols = st.columns(5)
@@ -766,7 +736,6 @@ def main():
                         if st.button(f"{m}월 선택", key=f"btn_month_{m}", use_container_width=True):
                             st.session_state['selected_wolun_month'] = m
                             st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
 
         # --- 월운 상세 상호작용 분석 섹션 (NEW) ---
         sel_month = st.session_state.get('selected_wolun_month')
