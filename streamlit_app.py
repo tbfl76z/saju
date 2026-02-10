@@ -32,12 +32,16 @@ st.markdown("""
         border-radius: 8px !important;
         border: none !important;
         font-weight: bold !important;
-        height: 2.8rem !important;
+        height: 3rem !important;
         width: 100% !important;
-        margin-top: 5px !important;
+        margin: 5px 0 !important;
         transition: all 0.3s ease;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
         font-family: 'Noto Serif KR', serif;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        font-size: 0.9rem !important;
     }
     div.stButton > button:hover {
         background-color: #bfa02d !important;
@@ -322,7 +326,9 @@ def main():
 
         # 4주 명식 고정 레이아웃 (HTML Table로 변경하여 그리드 꼬임 방지)
         def get_pill_html_table(top_label, main_text, sub_label, color="#2c3e50", sub_color="#666"):
-            return f'<td style="padding: 4px; width: 22%;"><div style="background: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 10px 5px; text-align: center; box-shadow: 2px 2px 5px rgba(0,0,0,0.03);"><div style="font-size: 0.7rem; color: #d4af37; margin-bottom: 3px; font-weight: bold;">{top_label}</div><div style="font-size: 1.6rem; font-weight: bold; color: {color}; margin: 2px 0;">{main_text}</div><div style="font-size: 0.8rem; color: {sub_color}; margin-top: 3px; font-weight: 500;">{sub_label}</div></div></td>'
+            desc = SAJU_TERMS.get(main_text, "")
+            tooltip = f' title="{desc}"' if desc else ""
+            return f'<td style="padding: 4px; width: 22%;"><div{tooltip} style="background: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 10px 5px; text-align: center; box-shadow: 2px 2px 5px rgba(0,0,0,0.03); cursor: help;"><div style="font-size: 0.7rem; color: #d4af37; margin-bottom: 3px; font-weight: bold;">{top_label}</div><div style="font-size: 1.6rem; font-weight: bold; color: {color}; margin: 2px 0;">{main_text}</div><div style="font-size: 0.8rem; color: {sub_color}; margin-top: 3px; font-weight: 500;">{sub_label}</div></div></td>'
 
         st.markdown(f"""<table style="width: 100%; border-collapse: separate; border-spacing: 4px; table-layout: fixed; margin-bottom: 10px;"><tr><td style="width: 15%; background: #f8f9fa; border-radius: 8px; text-align: center; font-weight: bold; color: #666; font-size: 0.8rem;">천간</td>{get_pill_html_table(data['ten_gods']['hour'], pillars['hour']['stem'], '시주')}{get_pill_html_table(data['ten_gods']['day'], pillars['day']['stem'], '일주', color='#d32f2f')}{get_pill_html_table(data['ten_gods']['month'], pillars['month']['stem'], '월주')}{get_pill_html_table(data['ten_gods']['year'], pillars['year']['stem'], '연주')}</tr><tr style="height: 4px;"></tr><tr><td style="width: 15%; background: #f8f9fa; border-radius: 8px; text-align: center; font-weight: bold; color: #666; font-size: 0.8rem;">지지</td>{get_pill_html_table('시지', pillars['hour']['branch'], data['jiji_ten_gods']['hour'], sub_color="#d63384")}{get_pill_html_table('일지', pillars['day']['branch'], data['jiji_ten_gods']['day'], sub_color="#d63384")}{get_pill_html_table('월지', pillars['month']['branch'], data['jiji_ten_gods']['month'], sub_color="#d63384")}{get_pill_html_table('연지', pillars['year']['branch'], data['jiji_ten_gods']['year'], sub_color="#d63384")}</tr><tr style="height: 4px;"></tr><tr><td style="width: 15%; background: #f8f9fa; border-radius: 8px; text-align: center; font-weight: bold; color: #666; font-size: 0.8rem;">운성</td>{get_pill_html_table('시주', data['twelve_growth']['hour'], '12운성', color="#1976d2", sub_color="#1976d2")}{get_pill_html_table('일주', data['twelve_growth']['day'], '12운성', color="#1976d2", sub_color="#1976d2")}{get_pill_html_table('월주', data['twelve_growth']['month'], '12운성', color="#1976d2", sub_color="#1976d2")}{get_pill_html_table('연주', data['twelve_growth']['year'], '12운성', color="#1976d2", sub_color="#1976d2")}</tr></table>""", unsafe_allow_html=True)
         
@@ -364,7 +370,8 @@ def main():
                 st.rerun()
                 
             # 카드형 가독성 개선 (이미지 스타일 준수)
-            st.markdown(f"""<div style='border:{border_css}; padding:15px; border-radius:12px; text-align:center; background-color:{bg_css}; margin-bottom:15px; box-shadow: 0 2px 6px rgba(0,0,0,0.04);'><div style='font-size:0.9rem; font-weight:bold; color:#f39c12; margin-bottom:5px;'>{age_val}세~</div><div style='font-size:1.8rem; font-weight:bold; color:#2c3e50; margin:5px 0;'>{item.get('ganzhi', '-')}</div><div style='display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;'><div><div style='font-size:0.7rem; color:#888;'>십성</div><div style='font-size:0.9rem; color:#d32f2f; font-weight:500;'>{item.get('stem_ten_god', '-')} | {item.get('branch_ten_god', '-')}</div></div><div><div style='font-size:0.7rem; color:#888;'>운성</div><div style='font-size:0.9rem; color:#1976d2; font-weight:500;'>{item.get('twelve_growth', '-')}</div></div></div><div style='font-size:0.8rem; color:#e67e22; margin-top:8px; font-weight:500;'>✨ 신살: {item.get('sinsal', '-')}</div><div style='font-size:0.75rem; color:#9b59b6; margin-top:4px; font-weight:500;'>🔗 관계: {item.get('relations', '-')}</div></div>""", unsafe_allow_html=True)
+            card_class = "saju-card selected" if is_sel_daeun else "saju-card"
+            st.markdown(f"""<div class='{card_class}' style='padding:15px; min-height:180px;'><div style='font-size:0.9rem; font-weight:bold; color:#f39c12; margin-bottom:5px;'>{age_val}세~</div><div class='ganzhi-text' style='font-size:2.2rem; font-weight:bold; color:#2c3e50; margin:5px 0;'>{item.get('ganzhi', '-')}</div><div style='display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;'><div><div style='font-size:0.7rem; color:#888;'>십성</div><div style='font-size:0.9rem; color:#d32f2f; font-weight:500;'>{item.get('stem_ten_god', '-')} | {item.get('branch_ten_god', '-')}</div></div><div><div style='font-size:0.7rem; color:#888;'>운성</div><div style='font-size:0.9rem; color:#1976d2; font-weight:500;'>{item.get('twelve_growth', '-')}</div></div></div><div style='font-size:0.8rem; color:#e67e22; margin-top:8px; font-weight:500;'>✨ 신살: {item.get('sinsal', '-')}</div><div style='font-size:0.75rem; color:#9b59b6; margin-top:4px; font-weight:500;'>🔗 관계: {item.get('relations', '-')}</div></div>""", unsafe_allow_html=True)
 
         # --- 대운 상세 상호작용 분석 섹션 (NEW) ---
         if 'selected_daeun_age' in st.session_state:
@@ -431,11 +438,11 @@ def main():
                 p_data = {k: get_pillar_relation(k) for k in p_keys}
                 
                 row_items = [
-                    ("원국 간지", [p_data[k]['ganzhi'] for k in p_keys]),
-                    ("해당 십성", [p_data[k]['ten_god'] for k in p_keys]),
-                    ("대운 운성", [p_data[k]['growth'] for k in p_keys]),
-                    ("적용 신살", [p_data[k]['sinsal'] for k in p_keys]),
-                    ("합·충·관계", [p_data[k]['interaction'] for k in p_keys])
+                    ("사주원국 간지", [p_data[k]['ganzhi'] for k in p_keys]),
+                    ("원국 해당 십성", [p_data[k]['ten_god'] for k in p_keys]),
+                    ("대운 적용 운성", [p_data[k]['growth'] for k in p_keys]),
+                    ("적용 신살·귀인", [p_data[k]['sinsal'] for k in p_keys]),
+                    ("상호 관계 분석", [p_data[k]['interaction'] for k in p_keys])
                 ]
                 
                 table_html = f"""
@@ -451,7 +458,9 @@ def main():
                     for val in vals:
                         # 텍스트 길이에 따른 폰트 조절
                         f_size = "0.75rem" if len(val) <= 4 else "0.65rem"
-                        table_html += f'<td style="background-color: #ffffff; border: 1px solid #eee; border-radius: 8px; padding: 8px; font-size: {f_size}; color: #333;">{val} ˅</td>'
+                        desc = SAJU_TERMS.get(val.replace(" ˅", ""), "")
+                        tooltip = f' title="{desc}"' if desc else ""
+                        table_html += f'<td{tooltip} style="background-color: #ffffff; border: 1px solid #eee; border-radius: 8px; padding: 8px; font-size: {f_size}; color: #333; cursor: help;">{val}</td>'
                     table_html += "</tr>"
                 table_html += "</table></div>"
                 st.markdown(table_html, unsafe_allow_html=True)
@@ -586,11 +595,11 @@ def main():
                     # 모바일 최적화 고품격 세운 상세 분석 테이블 (HTML)
                     syc_labels = ["분석 항목"] + [d['name'] for d in sy_data]
                     sy_row_items = [
-                        ("대상 간지", [d['ganzhi'] for d in sy_data]),
-                        ("대상 십성", [d['ten_god'] for d in sy_data]),
-                        ("세운 운성", [d['growth'] for d in sy_data]),
-                        ("적용 신살", [d['sinsal'] for d in sy_data]),
-                        ("상호 관계", [d['interaction'] for d in sy_data])
+                        ("대상 사주 간지", [d['ganzhi'] for d in sy_data]),
+                        ("대상 기둥 십성", [d['ten_god'] for d in sy_data]),
+                        ("세운 적용 운성", [d['growth'] for d in sy_data]),
+                        ("적용 신살·귀인", [d['sinsal'] for d in sy_data]),
+                        ("상호 관계 분석", [d['interaction'] for d in sy_data])
                     ]
                     
                     table_html = f"""
@@ -605,7 +614,9 @@ def main():
                         table_html += f'<td style="background-color: #f8f9fa; border-radius: 6px; padding: 6px; font-weight: bold; color: #444;">{label}</td>'
                         for val in vals:
                             f_size = "0.75rem" if len(val) <= 4 else "0.65rem"
-                            table_html += f'<td style="background-color: #ffffff; border: 1px solid #eee; border-radius: 6px; padding: 6px; font-size: {f_size};">{val} ˅</td>'
+                            desc = SAJU_TERMS.get(val.replace(" ˅", ""), "")
+                            tooltip = f' title="{desc}"' if desc else ""
+                            table_html += f'<td{tooltip} style="background-color: #ffffff; border: 1px solid #eee; border-radius: 6px; padding: 6px; font-size: {f_size}; cursor: help;">{val}</td>'
                         table_html += "</tr>"
                     table_html += "</table></div>"
                     st.markdown(table_html, unsafe_allow_html=True)
@@ -736,16 +747,18 @@ def main():
                 </tr>
             """
             row_defs = [
-                ("간지", [d['ganzhi'] for d in mw_data]),
-                ("십성", [d['ten_god'] for d in mw_data]),
-                ("운성", [d['growth'] for d in mw_data]),
-                ("상호", [d['interaction'] for d in mw_data])
+                ("분석 대상 간지", [d['ganzhi'] for d in mw_data]),
+                ("해당 기둥 십성", [d['ten_god'] for d in mw_data]),
+                ("월운 적용 운성", [d['growth'] for d in mw_data]),
+                ("상호 관계 분석", [d['interaction'] for d in mw_data])
             ]
             for r_lab, r_vals in row_defs:
                 table_html += "<tr>"
                 table_html += f'<td style="background-color: #f8f9fa; border-radius: 6px; padding: 6px; font-weight: bold;">{r_lab}</td>'
                 for rv in r_vals:
-                    table_html += f'<td style="background-color: #ffffff; border: 1px solid #eee; border-radius: 6px; padding: 6px;">{rv}</td>'
+                    desc = SAJU_TERMS.get(rv, "")
+                    tooltip = f' title="{desc}"' if desc else ""
+                    table_html += f'<td{tooltip} style="background-color: #ffffff; border: 1px solid #eee; border-radius: 6px; padding: 6px; cursor: help;">{rv}</td>'
                 table_html += "</tr>"
             table_html += "</table></div>"
             st.markdown(table_html, unsafe_allow_html=True)
