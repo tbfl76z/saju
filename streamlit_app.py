@@ -359,11 +359,12 @@ def main():
         # --- 사주 4주 명식 (이미지 2 스타일로 통합) ---
         p_keys = ['hour', 'day', 'month', 'year']
         p_headers = ["시주(時)", "일주(日)", "월주(月)", "연주(년)"]
-        p_row_labels = ["사주원국 간지", "해당 기둥 십성", "기둥별 12운성"]
+        p_row_labels = ["천간(Stem)", "지지(Branch)", "해당 기둥 십성", "기둥별 12운성"]
         
         # 십성은 천간/지지 합쳐서 표시하거나 각각 구분
         p_grid = [
-            [pillars[k]['pillar'] for k in p_keys],
+            [pillars[k]['stem'] for k in p_keys],
+            [pillars[k]['branch'] for k in p_keys],
             [f"{data['ten_gods'][k]} | {data['jiji_ten_gods'][k]}" for k in p_keys],
             [data['twelve_growth'][k] for k in p_keys]
         ]
@@ -473,10 +474,11 @@ def main():
                 p_keys = ['hour', 'day', 'month', 'year']
                 p_data = {k: get_pillar_relation(k) for k in p_keys}
                 
-                row_labels = ["사주원국 간지", "원국 해당 십성", "대운 적용 운성", "적용 신살·귀인", "상호 관계 분석"]
+                row_labels = ["천간(Stem)", "지지(Branch)", "원국 해당 십성", "대운 적용 운성", "적용 신살·귀인", "상호 관계 분석"]
                 column_headers = ["시주(時)", "일주(日)", "월주(月)", "연주(년)"]
                 data_grid = [
-                    [p_data[k]['ganzhi'] for k in p_keys],
+                    [p_data[k]['ganzhi'][0] if len(p_data[k]['ganzhi']) >= 2 else '-' for k in p_keys],
+                    [p_data[k]['ganzhi'][1] if len(p_data[k]['ganzhi']) >= 2 else '-' for k in p_keys],
                     [p_data[k]['ten_god'] for k in p_keys],
                     [p_data[k]['growth'] for k in p_keys],
                     [p_data[k]['sinsal'] for k in p_keys],
@@ -606,7 +608,8 @@ def main():
                     # 이미지 2 스타일 세운 상세 분석 테이블 호출
                     syc_headers = [d['name'] for d in sy_data]
                     sy_grid = [
-                        [d['ganzhi'] for d in sy_data],
+                        [d['ganzhi'][0] if len(d['ganzhi']) >= 2 else '-' for d in sy_data],
+                        [d['ganzhi'][1] if len(d['ganzhi']) >= 2 else '-' for d in sy_data],
                         [d['ten_god'] for d in sy_data],
                         [d['growth'] for d in sy_data],
                         [d['sinsal'] for d in sy_data],
@@ -616,7 +619,7 @@ def main():
                     render_analysis_table(
                         f"{sel_year}년 세운({sel_seyun['ganzhi']}) 상세 분석",
                         f"선택하신 세운이 원국(4주) 및 현재 대운({sel_daeun['ganzhi'] if sel_daeun else '-'})과 맺는 복합 상호작용을 풀이합니다.",
-                        ["대상 사주 간지", "대상 기둥 십성", "세운 적용 운성", "적용 신살·귀인", "상호 관계 분석"],
+                        ["천간(Stem)", "지지(Branch)", "대상 기둥 십성", "세운 적용 운성", "적용 신살·귀인", "상호 관계 분석"],
                         syc_headers, sy_grid
                     )
                     
@@ -706,7 +709,8 @@ def main():
             # 이미지 2 스타일 월운 상세 분석 테이블 호출
             mw_headers = [d['label'] for d in mw_data if d['label'] != '항목']
             mw_grid = [
-                [d['ganzhi'] for d in mw_data],
+                [d['ganzhi'][0] if len(d['ganzhi']) >= 2 else '-' for d in mw_data],
+                [d['ganzhi'][1] if len(d['ganzhi']) >= 2 else '-' for d in mw_data],
                 [d['ten_god'] for d in mw_data],
                 [d['growth'] for d in mw_data],
                 [d['interaction'] for d in mw_data]
@@ -715,7 +719,7 @@ def main():
             render_analysis_table(
                 f"{sel_month}월({wol_data['ganzhi']}) 상세 분석",
                 f"선택하신 {sel_month}월의 기운이 원국(4주) 및 대운/세운과 맺는 관계를 분석합니다.",
-                ["분석 대상 간지", "해당 기둥 십성", "월운 적용 운성", "상호 관계 분석"],
+                ["천간(Stem)", "지지(Branch)", "해당 기둥 십성", "월운 적용 운성", "상호 관계 분석"],
                 ["연주", "월주", "일주", "시주", "대운", "세운"],
                 mw_grid
             )
