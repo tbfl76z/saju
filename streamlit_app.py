@@ -510,24 +510,28 @@ def main():
         
         daeun_list = data['fortune']['list']
         # Removed: st.markdown('<div class="saju-grid-5">', unsafe_allow_html=True)
+        # 대운 리스트 (HTML Grid로 강제 고정)
+        daeun_html = '<div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:6px; width:100%; overflow-x:auto; padding-bottom:10px;">'
+        for d in daeun_list:
+            card_class = "saju-card selected" if d['age'] == st.session_state.get('selected_daeun_age') else "saju-card"
+            daeun_html += f"""
+                <div class='{card_class}'>
+                    <div style='font-size:0.65rem; color:#6b7280;'>{d['age']}세 대운</div>
+                    <div style='font-size:1.1rem; font-weight:700; color:#1f2937;'>{d['ganzhi']}</div>
+                    <div style='font-size:0.6rem; color:#ef4444;'>{d['stem_ten_god']} | {d['branch_ten_god']}</div>
+                    <div style='font-size:0.6rem; color:#10b981;'>{d['twelve_growth']}</div>
+                </div>
+            """
+        daeun_html += '</div>'
+        st.markdown(daeun_html, unsafe_allow_html=True)
+        
+        # 선택 버튼은 별도로 (이 부분의 5열 정렬도 HTML로 처리하거나 유지)
         for i in range(0, len(daeun_list), 5):
             d_cols = st.columns(5)
             chunk = daeun_list[i:i+5]
             for idx, item in enumerate(chunk):
                 age_val = item.get('age', 0)
-                is_sel_daeun = st.session_state.get('selected_daeun_age') == age_val
-                
                 with d_cols[idx]:
-                    render_saju_card(
-                        f"{age_val}세 대운",
-                        item.get('ganzhi', '-'),
-                        item.get('stem_ten_god', '-'),
-                        item.get('branch_ten_god', '-'),
-                        item.get('twelve_growth', '-'),
-                        f"신살: {item.get('sinsal', '-')}",
-                        f"관계: {item.get('relations', '-')}",
-                        is_sel_daeun
-                    )
                     if st.button(f"{age_val}세 선택", key=f"btn_daeun_grid_{age_val}", use_container_width=True):
                         st.session_state['selected_daeun_age'] = age_val
                         birth_year = int(data.get('birth_date', '1990-01-01').split('-')[0])
@@ -630,25 +634,29 @@ def main():
 
         if seyun_list:
             st.subheader(f"📅 세운(年運): {seyun_start_year}년 ~ {seyun_start_year+9}년")
+            # 세운 리스트 (HTML Grid로 강제 고정)
+            seyun_html = '<div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:6px; width:100%; overflow-x:auto; padding-bottom:10px;">'
+            for s in seyun_list:
+                s_year = s['year']
+                is_sel_year = st.session_state.get('selected_seyun_year') == s_year
+                card_class = "saju-card selected" if is_sel_year else "saju-card"
+                seyun_html += f"""
+                    <div class='{card_class}'>
+                        <div style='font-size:0.65rem; color:#6b7280;'>{s_year}년</div>
+                        <div style='font-size:1.1rem; font-weight:700; color:#1f2937;'>{s['ganzhi']}</div>
+                        <div style='font-size:0.6rem; color:#ef4444;'>{s['stem_ten_god']} | {s['branch_ten_god']}</div>
+                        <div style='font-size:0.6rem; color:#10b981;'>{s['twelve_growth']}</div>
+                    </div>
+                """
+            seyun_html += '</div>'
+            st.markdown(seyun_html, unsafe_allow_html=True)
+
             for i in range(0, len(seyun_list), 5):
                 s_cols = st.columns(5)
                 chunk = seyun_list[i:i+5]
                 for idx, s_item in enumerate(chunk):
                     s_year = s_item['year']
-                    is_sel_year = st.session_state.get('selected_seyun_year') == s_year
-                    is_now = s_year == now_year
-                    
                     with s_cols[idx]:
-                        render_saju_card(
-                            f"{s_year}년 {'(현재)' if is_now else ''}",
-                            s_item['ganzhi'],
-                            s_item['stem_ten_god'],
-                            s_item['branch_ten_god'],
-                            s_item['twelve_growth'],
-                            f"✨ {s_item['sinsal']}",
-                            f"🔗 {s_item['relations']}",
-                            is_sel_year
-                        )
                         if st.button(f"{s_year}년 선택", key=f"btn_year_{s_year}", use_container_width=True):
                             st.session_state['selected_seyun_year'] = s_year
                             st.rerun()
@@ -741,31 +749,29 @@ def main():
             cur_seyun = next((s for s in seyun_list if s['year'] == sel_year), seyun_list[0] if seyun_list else {})
             
             # 월운(Wolun) 시각화 - 5열 그리드로 통일 (이미지 4, 6 스타일 계승)
+            # 월운(Wolun) 시각화 - HTML Grid로 완벽 고정
+            wolun_html = '<div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:6px; width:100%; overflow-x:auto; padding-bottom:10px;">'
+            for m in range(1, 13):
+                wolun_data = get_wolun_data(pillars['day']['stem'], pillars['year']['branch'], cur_seyun['ganzhi'], m, pillars, pillars['day']['branch'])
+                is_sel_month = st.session_state.get('selected_wolun_month') == m
+                card_class = "saju-card selected" if is_sel_month else "saju-card"
+                wolun_html += f"""
+                    <div class='{card_class}'>
+                        <div style='font-size:0.65rem; color:#6b7280;'>{m}월</div>
+                        <div style='font-size:1.1rem; font-weight:700; color:#1f2937;'>{wolun_data['ganzhi']}</div>
+                        <div style='font-size:0.6rem; color:#ef4444;'>{wolun_data['stem_ten_god']} | {wolun_data['branch_ten_god']}</div>
+                        <div style='font-size:0.6rem; color:#10b981;'>{wolun_data['twelve_growth']}</div>
+                    </div>
+                """
+            wolun_html += '</div>'
+            st.markdown(wolun_html, unsafe_allow_html=True)
+
+            # 월운 선택 버튼 그리드 (가로 유지)
             for i in range(1, 13, 5):
-                w_cols = st.columns(5)
-                chunk = list(range(i, min(i+5, 13)))
-                for idx, m in enumerate(chunk):
-                    wolun = get_wolun_data(pillars.get('day', {}).get('stem', '甲'), 
-                                         pillars.get('year', {}).get('branch', '子'), 
-                                         cur_seyun.get('ganzhi', '甲子'), m, 
-                                         pillars=pillars, 
-                                         day_branch=pillars.get('day', {}).get('branch', '丑'))
-                    
-                    selected_month = st.session_state.get('selected_wolun_month', datetime.datetime.now().month)
-                    is_sel_month = selected_month == m
-                    
-                    with w_cols[idx]:
-                        render_saju_card(
-                            f"{m}월",
-                            wolun.get('ganzhi', '-'),
-                            wolun.get('stem_ten_god', '-'),
-                            wolun.get('branch_ten_god', '-'),
-                            wolun.get('twelve_growth', '-'),
-                            f"✨ {wolun.get('sinsal', '-')}",
-                            "-",
-                            is_sel_month
-                        )
-                        if st.button(f"{m}월 선택", key=f"btn_month_{m}", use_container_width=True):
+                m_cols = st.columns(5)
+                for idx, m in enumerate(range(i, min(i+5, 13))):
+                    with m_cols[idx]:
+                        if st.button(f"{m}월", key=f"btn_month_{m}", use_container_width=True):
                             st.session_state['selected_wolun_month'] = m
                             st.rerun()
 
