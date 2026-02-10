@@ -466,7 +466,51 @@ def main():
             sel_daeun = next((d for d in data['fortune']['list'] if d['age'] == sel_age), None)
             
             if sel_daeun:
-                # 이미지 2 스타일 상세 분석 테이블 호출
+                # 상세 관계 데이터 재산출 (각 기둥별로 개별 관계 추출)
+                def get_pillar_relation(pillar_key):
+                    p = pillars[pillar_key]
+                    d_ganzhi = sel_daeun['ganzhi']
+                    if not d_ganzhi or len(d_ganzhi) < 2: return {}
+                    d_stem, d_branch = d_ganzhi[0], d_ganzhi[1]
+                    p_stem, p_branch = p['stem'], p['branch']
+                    
+                    from saju_utils import GAN_TEN_GODS, TWELVE_GROWTH, STEM_RELATIONS, BRANCH_RELATIONS
+                    day_gan = pillars['day']['stem']
+                    
+                    inter_rels = []
+                    sinsal_rels = []
+                    if STEM_RELATIONS['충'].get(d_stem) == p_stem: inter_rels.append("천간충(沖)")
+                    if STEM_RELATIONS['합'].get(d_stem) == p_stem: inter_rels.append("천간합(合)")
+                    if BRANCH_RELATIONS['충'].get(d_branch) == p_branch: inter_rels.append("충(沖)")
+                    if BRANCH_RELATIONS['합'].get(d_branch) == p_branch: inter_rels.append("합(合)")
+                    
+                    h_val = BRANCH_RELATIONS['형'].get(d_branch)
+                    if h_val:
+                        if isinstance(h_val, list):
+                            if p_branch in h_val: inter_rels.append("형(刑)")
+                        elif h_val == p_branch: inter_rels.append("형(刑)")
+                    
+                    if BRANCH_RELATIONS['파'].get(d_branch) == p_branch: inter_rels.append("파(破)")
+                    if BRANCH_RELATIONS['해'].get(d_branch) == p_branch: inter_rels.append("해(害)")
+                    if BRANCH_RELATIONS['원진'].get(d_branch) == p_branch: sinsal_rels.append("원진(元嗔)")
+                    if BRANCH_RELATIONS['귀문'].get(d_branch) == p_branch: sinsal_rels.append("귀문(鬼門)")
+                    
+                    year_branch = pillars['year']['branch']
+                    from saju_utils import get_sinsal_list
+                    twelve_sinsal = get_sinsal_list(year_branch, d_branch)
+                    if twelve_sinsal and twelve_sinsal not in sinsal_rels: sinsal_rels.append(twelve_sinsal)
+                    
+                    return {
+                        "ganzhi": p['pillar'],
+                        "ten_god": GAN_TEN_GODS.get(day_gan, {}).get(p_stem, '-'),
+                        "growth": TWELVE_GROWTH.get(d_stem, {}).get(p_branch, '-'),
+                        "sinsal": ", ".join(sinsal_rels) if sinsal_rels else "-",
+                        "interaction": ", ".join(inter_rels) if inter_rels else "평온"
+                    }
+
+                p_keys = ['hour', 'day', 'month', 'year']
+                p_data = {k: get_pillar_relation(k) for k in p_keys}
+                
                 row_labels = ["사주원국 간지", "원국 해당 십성", "대운 적용 운성", "적용 신살·귀인", "상호 관계 분석"]
                 column_headers = ["시주(時)", "일주(日)", "월주(月)", "연주(년)"]
                 data_grid = [
@@ -546,6 +590,57 @@ def main():
                 sel_daeun = next((d for d in data['fortune']['list'] if d['age'] == sel_daeun_age), None)
                 
                 if sel_seyun:
+                    # 세운 상호작용 데이터 산출
+                    def get_seyun_relation(target_pillar_val, target_name):
+                        if not target_pillar_val or len(target_pillar_val) < 2: return {}
+                        s_ganzhi = sel_seyun['ganzhi']
+                        s_stem, s_branch = s_ganzhi[0], s_ganzhi[1]
+                        t_stem, t_branch = target_pillar_val[0], target_pillar_val[1]
+                        
+                        from saju_utils import GAN_TEN_GODS, TWELVE_GROWTH, STEM_RELATIONS, BRANCH_RELATIONS
+                        day_gan = pillars['day']['stem']
+                        
+                        inter_rels = []
+                        sinsal_rels = []
+                        if STEM_RELATIONS['충'].get(s_stem) == t_stem: inter_rels.append("천간충(沖)")
+                        if STEM_RELATIONS['합'].get(s_stem) == t_stem: inter_rels.append("천간합(合)")
+                        if BRANCH_RELATIONS['충'].get(s_branch) == t_branch: inter_rels.append("충(沖)")
+                        if BRANCH_RELATIONS['합'].get(s_branch) == t_branch: inter_rels.append("합(合)")
+                        
+                        h_val = BRANCH_RELATIONS['형'].get(s_branch)
+                        if h_val:
+                            if isinstance(h_val, list):
+                                if t_branch in h_val: inter_rels.append("형(刑)")
+                            elif h_val == t_branch: inter_rels.append("형(刑)")
+                        
+                        if BRANCH_RELATIONS['파'].get(s_branch) == t_branch: inter_rels.append("파(破)")
+                        if BRANCH_RELATIONS['해'].get(s_branch) == t_branch: inter_rels.append("해(害)")
+                        if BRANCH_RELATIONS['원진'].get(s_branch) == t_branch: sinsal_rels.append("원진(元嗔)")
+                        if BRANCH_RELATIONS['귀문'].get(s_branch) == t_branch: sinsal_rels.append("귀문(鬼門)")
+                        
+                        year_branch = pillars['year']['branch']
+                        from saju_utils import get_sinsal_list
+                        twelve_sinsal = get_sinsal_list(year_branch, s_branch)
+                        if twelve_sinsal and twelve_sinsal not in sinsal_rels: sinsal_rels.append(twelve_sinsal)
+                        
+                        return {
+                            "name": target_name,
+                            "ganzhi": target_pillar_val,
+                            "ten_god": GAN_TEN_GODS.get(day_gan, {}).get(t_stem, '-'),
+                            "growth": TWELVE_GROWTH.get(s_stem, {}).get(t_branch, '-'),
+                            "sinsal": ", ".join(sinsal_rels) if sinsal_rels else "-",
+                            "interaction": ", ".join(inter_rels) if inter_rels else "평온"
+                        }
+
+                    targets = [
+                        ('hour', pillars['hour']['pillar'], "시주"),
+                        ('day', pillars['day']['pillar'], "일주"),
+                        ('month', pillars['month']['pillar'], "월주"),
+                        ('year', pillars['year']['pillar'], "연주"),
+                        ('daeun', sel_daeun['ganzhi'] if sel_daeun else None, "대운")
+                    ]
+                    sy_data = [get_seyun_relation(t[1], t[2]) for t in targets if t[1]]
+
                     # 이미지 2 스타일 세운 상세 분석 테이블 호출
                     syc_headers = [d['name'] for d in sy_data]
                     sy_grid = [
@@ -610,6 +705,42 @@ def main():
             from saju_utils import get_wolun_data
             wol_data = get_wolun_data(pillars['day']['stem'], pillars['year']['branch'], cur_seyun['ganzhi'], sel_month, pillars, pillars['day']['branch'])
             
+            # 월운 상호작용 데이터 산출
+            mw_targets = [
+                ('year', "연주"), ('month', "월주"), ('day', "일주"), ('hour', "시주"),
+                ('daeun', "대운"), ('seyun', "세운")
+            ]
+            mw_data = []
+            w_gz = wol_data['ganzhi']
+            w_stem, w_branch = w_gz[0], w_gz[1]
+            
+            from saju_utils import GAN_TEN_GODS, TWELVE_GROWTH, STEM_RELATIONS, BRANCH_RELATIONS
+            for k, label in mw_targets:
+                if k == 'daeun': gz = sel_daeun['ganzhi'] if sel_daeun else "-"
+                elif k == 'seyun': gz = cur_seyun['ganzhi'] if cur_seyun else "-"
+                else: 
+                    gz_info = pillars.get(k, {})
+                    gz = gz_info.get('pillar', '-') if isinstance(gz_info, dict) else "-"
+                
+                if gz != "-" and len(gz) >= 2:
+                    t_stem, t_branch = gz[0], gz[1]
+                else:
+                    t_stem, t_branch = "-", "-"
+                
+                rels = []
+                if t_stem != "-" and STEM_RELATIONS['충'].get(w_stem) == t_stem: rels.append("천간충")
+                if t_stem != "-" and STEM_RELATIONS['합'].get(w_stem) == t_stem: rels.append("천간합")
+                if t_branch != "-" and BRANCH_RELATIONS['충'].get(w_branch) == t_branch: rels.append("충")
+                if t_branch != "-" and BRANCH_RELATIONS['합'].get(w_branch) == t_branch: rels.append("합")
+                
+                mw_data.append({
+                    "label": label,
+                    "ganzhi": gz,
+                    "ten_god": GAN_TEN_GODS.get(pillars['day']['stem'], {}).get(t_stem, '-'),
+                    "growth": TWELVE_GROWTH.get(w_stem, {}).get(t_branch, '-'),
+                    "interaction": ", ".join(rels) if rels else "평온"
+                })
+
             # 이미지 2 스타일 월운 상세 분석 테이블 호출
             mw_headers = [d['label'] for d in mw_data if d['label'] != '항목']
             mw_grid = [
