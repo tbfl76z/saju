@@ -45,40 +45,35 @@ st.markdown("""
         transform: translateY(-2px);
     }
     
-    /* 모바일 그리드 강제 (이미지 2 스타일) */
+    /* 모바일 그리드 강제 */
     @media (max-width: 768px) {
         div[data-testid="stHorizontalBlock"] {
             flex-direction: row !important;
             flex-wrap: wrap !important;
             gap: 5px !important;
         }
-        div[data-testid="column"] {
-            flex: 1 1 18% !important; 
-            min-width: 100px !important;
-        }
-        .wolun-grid div[data-testid="column"] {
-            flex: 1 1 23% !important;
-            min-width: 80px !important;
-        }
     }
     
     /* 카드 공통 스타일 */
     .saju-card {
         border: 1px solid #e0e0e0;
-        border-radius: 15px;
-        padding: 15px;
+        border-radius: 12px;
+        padding: 12px 8px;
         text-align: center;
         background-color: white;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         margin-bottom: 10px;
-        transition: transform 0.2s ease;
+        transition: all 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
     }
     .saju-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     }
     .saju-card.selected {
-        border: 3px solid #d4af37 !important;
+        border: 2px solid #d4af37 !important;
         background-color: #fffcf0 !important;
     }
     
@@ -89,60 +84,15 @@ st.markdown("""
         background-color: #ffffff;
         box-shadow: 0 4px 15px rgba(212, 175, 55, 0.1);
     }
-    /* 테이블 스타일링 */
-    .saju-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 20px 0;
-        text-align: center;
-        font-family: 'Noto Serif KR', serif;
-    }
-    .saju-table th { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 10px; color: #2c3e50; }
-    .saju-table td { border: 1px solid #dee2e6; padding: 10px; color: #333; }
-    .pillar-cell { font-size: 1.2rem; font-weight: bold; }
-    .ten-god { color: #d4af37; font-size: 0.9rem; }
     
-    /* 모바일 한 화면 보기(Condensed View) 최적화 */
+    /* 명식표 및 분석 테이블 폰트 최적화 */
+    .saju-table-container { font-family: 'Noto Serif KR', serif; }
+    
+    /* 모바일 환경 최적화 */
     @media (max-width: 768px) {
-        html, body, [data-testid="stAppViewContainer"] {
-            font-size: 0.85rem !important;
-        }
-        .main .block-container {
-            padding-left: 0.5rem !important;
-            padding-right: 0.5rem !important;
-            padding-top: 1rem !important;
-        }
-        [data-testid="stHorizontalBlock"] {
-            gap: 0.3rem !important;
-        }
-        [data-testid="column"] {
-            min-width: 0 !important;
-            flex: 1 1 0% !important;
-            padding: 0 !important;
-        }
-        /* 명식표 글자 크기 더 축소 */
-        .pillar-cell { font-size: 0.95rem !important; }
-        .ten-god { font-size: 0.75rem !important; }
-        .saju-table td { padding: 4px !important; }
-        
-        /* 카드형 요소 고밀도화 */
-        div[style*="border-radius:12px"] {
-            padding: 8px !important;
-            margin-bottom: 4px !important;
-        }
-        div[style*="font-size:1.6rem"], div[style*="font-size:1.4rem"] {
-            font-size: 1.1rem !important;
-        }
-        div[style*="font-size:0.9rem"], div[style*="font-size:0.85rem"] {
-            font-size: 0.7rem !important;
-        }
-        
-        /* 버튼 크기 조정 */
-        .stButton button {
-            padding: 2px 5px !important;
-            font-size: 0.75rem !important;
-            min-height: 25px !important;
-        }
+        .saju-card { padding: 8px 4px !important; }
+        .saju-card div { font-size: 0.8rem !important; }
+        .saju-card .ganzhi-text { font-size: 1.4rem !important; }
     }
     
     /* 공유 버튼 스타일 */
@@ -385,31 +335,29 @@ def main():
         st.markdown(f"""
         <table style="width: 100%; border-collapse: separate; border-spacing: 4px; table-layout: fixed; margin-bottom: 10px;">
             <tr>
-                <td style="width: 12%; background: #f8f9fa; border-radius: 10px; text-align: center; font-weight: bold; color: #666; font-size: 0.85rem;">천간</td>
+                <td style="width: 15%; background: #f8f9fa; border-radius: 8px; text-align: center; font-weight: bold; color: #666; font-size: 0.8rem;">천간</td>
                 {get_pill_html_table(data['ten_gods']['hour'], pillars['hour']['stem'], '시주')}
                 {get_pill_html_table(data['ten_gods']['day'], pillars['day']['stem'], '일주', color='#d32f2f')}
                 {get_pill_html_table(data['ten_gods']['month'], pillars['month']['stem'], '월주')}
                 {get_pill_html_table(data['ten_gods']['year'], pillars['year']['stem'], '연주')}
             </tr>
-            <tr style="height: 8px;"></tr> <!-- 간격용 -->
+            <tr style="height: 4px;"></tr>
             <tr>
-                <td style="width: 12%; background: #f8f9fa; border-radius: 10px; text-align: center; font-weight: bold; color: #666; font-size: 0.85rem;">지지</td>
+                <td style="width: 15%; background: #f8f9fa; border-radius: 8px; text-align: center; font-weight: bold; color: #666; font-size: 0.8rem;">지지</td>
                 {get_pill_html_table('시지', pillars['hour']['branch'], data['jiji_ten_gods']['hour'], sub_color="#d63384")}
                 {get_pill_html_table('일지', pillars['day']['branch'], data['jiji_ten_gods']['day'], sub_color="#d63384")}
                 {get_pill_html_table('월지', pillars['month']['branch'], data['jiji_ten_gods']['month'], sub_color="#d63384")}
                 {get_pill_html_table('연지', pillars['year']['branch'], data['jiji_ten_gods']['year'], sub_color="#d63384")}
             </tr>
+            <tr style="height: 4px;"></tr>
+            <tr>
+                <td style="width: 15%; background: #f8f9fa; border-radius: 8px; text-align: center; font-weight: bold; color: #666; font-size: 0.8rem;">운성</td>
+                {get_pill_html_table('12운성', data['twelve_growth']['hour'], '태', color="#1976d2", sub_color="#1976d2")}
+                {get_pill_html_table('12운성', data['twelve_growth']['day'], '장생', color="#1976d2", sub_color="#1976d2")}
+                {get_pill_html_table('12운성', data['twelve_growth']['month'], '태', color="#1976d2", sub_color="#1976d2")}
+                {get_pill_html_table('12운성', data['twelve_growth']['year'], '건록', color="#1976d2", sub_color="#1976d2")}
+            </tr>
         </table>
-        """, unsafe_allow_html=True)
-        
-        # 12운성 및 신살 한 줄 표시
-        st.markdown(f"""
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; margin-bottom: 15px; text-align: center;">
-            <div style="font-size: 0.7rem; color: #1976d2; border: 1px solid #e3f2fd; border-radius: 6px; padding: 3px;">12운성<br/>{data['twelve_growth']['hour']}</div>
-            <div style="font-size: 0.7rem; color: #1976d2; border: 1px solid #e3f2fd; border-radius: 6px; padding: 3px;">12운성<br/>{data['twelve_growth']['day']}</div>
-            <div style="font-size: 0.7rem; color: #1976d2; border: 1px solid #e3f2fd; border-radius: 6px; padding: 3px;">12운성<br/>{data['twelve_growth']['month']}</div>
-            <div style="font-size: 0.7rem; color: #1976d2; border: 1px solid #e3f2fd; border-radius: 6px; padding: 3px;">12운성<br/>{data['twelve_growth']['year']}</div>
-        </div>
         """, unsafe_allow_html=True)
         
         # 공망 및 지지 관계 표시
@@ -449,16 +397,23 @@ def main():
                 st.session_state['selected_seyun_year'] = birth_year + age_val - 1
                 st.rerun()
                 
+            # 카드형 가독성 개선 (이미지 스타일 준수)
             st.markdown(f"""
-            <div style='border:{border_css}; padding:25px; border-radius:15px; text-align:center; background-color:{bg_css}; margin-bottom:30px; box-shadow: 0 4px 12px rgba(0,0,0,0.06);'>
-                <div style='font-size:1.1rem; font-weight:bold; color:#f39c12; margin-bottom:10px;'>{age_val}세~</div>
-                <div style='font-size:3.5rem; font-weight:bold; color:#2c3e50; margin:10px 0;'>{item.get('ganzhi', '-')}</div>
-                <div style='font-size:0.85rem; color:#888; margin-top:10px;'>십성</div>
-                <div style='font-size:1.3rem; color:#d32f2f; margin-bottom:5px; font-weight:500;'>{item.get('stem_ten_god', '-')} | {item.get('branch_ten_god', '-')}</div>
-                <div style='font-size:0.85rem; color:#888; margin-top:5px;'>운성</div>
-                <div style='font-size:1.1rem; color:#1976d2; margin-bottom:12px; font-weight:500;'>{item.get('twelve_growth', '-')}</div>
-                <div style='font-size:1.1rem; color:#e67e22; margin-top:12px; border-top:1px solid #f0f0f0; padding-top:12px; font-weight:500;'>✨ 신살: {item.get('sinsal', '-')}</div>
-                <div style='font-size:1rem; color:#9b59b6; margin-top:6px; font-weight:500;'>🔗 관계: {item.get('relations', '-')}</div>
+            <div style='border:{border_css}; padding:15px; border-radius:12px; text-align:center; background-color:{bg_css}; margin-bottom:15px; box-shadow: 0 2px 6px rgba(0,0,0,0.04);'>
+                <div style='font-size:0.9rem; font-weight:bold; color:#f39c12; margin-bottom:5px;'>{age_val}세~</div>
+                <div style='font-size:1.8rem; font-weight:bold; color:#2c3e50; margin:5px 0;'>{item.get('ganzhi', '-')}</div>
+                <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;'>
+                    <div>
+                        <div style='font-size:0.7rem; color:#888;'>십성</div>
+                        <div style='font-size:0.9rem; color:#d32f2f; font-weight:500;'>{item.get('stem_ten_god', '-')} | {item.get('branch_ten_god', '-')}</div>
+                    </div>
+                    <div>
+                        <div style='font-size:0.7rem; color:#888;'>운성</div>
+                        <div style='font-size:0.9rem; color:#1976d2; font-weight:500;'>{item.get('twelve_growth', '-')}</div>
+                    </div>
+                </div>
+                <div style='font-size:0.8rem; color:#e67e22; margin-top:8px; font-weight:500;'>✨ 신살: {item.get('sinsal', '-')}</div>
+                <div style='font-size:0.75rem; color:#9b59b6; margin-top:4px; font-weight:500;'>🔗 관계: {item.get('relations', '-')}</div>
             </div>
             """, unsafe_allow_html=True)
 
