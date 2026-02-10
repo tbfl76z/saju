@@ -344,7 +344,13 @@ def main():
             desc = SAJU_TERMS.get(lookup_key) or SAJU_TERMS.get(clean_item)
             if desc: return desc
             
-            # 2. 2글자 간지(예: '甲子')인 경우 각각 분리해서 검색
+            # 2. 괄호 제거 후 재검색 (예: "원진(元嗔)" -> "원진")
+            import re
+            stripped_item = re.sub(r'\(.*?\)', '', lookup_key).strip()
+            desc = SAJU_TERMS.get(stripped_item)
+            if desc: return desc
+
+            # 3. 2글자 간지(예: '甲子')인 경우 각각 분리해서 검색
             if len(item) == 2:
                 stem_desc = SAJU_TERMS.get(item[0])
                 branch_desc = SAJU_TERMS.get(item[1])
