@@ -56,23 +56,38 @@ st.markdown("""
         margin: 0 auto !important;
     }
     
-    /* [핵심] 모바일/PC 구분 없이 모든 컬럼 컨테이너를 수평 가로로 강제 고정 */
+    /* [핵심] 모든 컬럼 컨테이너를 수평 가로로 강제 고정 및 비율 균등화 */
     div[data-testid="stHorizontalBlock"] {
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: stretch !important;
         width: 100% !important;
         overflow-x: auto !important;
-        gap: 6px !important;
+        gap: 4px !important; /* 간격 더욱 축소 */
     }
     
+    /* 기본적으로 모든 컬럼이 균등하게 공간을 차지하도록 강제 (1/N) */
     div[data-testid="column"] {
         flex: 1 1 0% !important;
-        min-width: 65px !important;
+        min-width: 0 !important; /* 유동적 축소 허용 */
     }
 
-    div[data-testid="stHorizontalBlock"] > div:first-child {
-        min-width: 85px !important;
+    /* 5열 카드 그리드 (대운, 세운, 월운) 전용 비율 고정 */
+    /* st.columns(5)를 사용하므로 각 컬럼은 정확히 20%여야 함 */
+    .saju-grid-5 div[data-testid="column"] {
+        flex: 0 0 19% !important; /* 갭을 고려하여 약 20%로 고정 */
+        max-width: 19% !important;
+    }
+
+    /* 상세 분석 표 (분석 항목 + 4주) 전용 비율 고정 */
+    /* 레이블 22%, 데이터칸 각 19.5% * 4 = 78% -> 합 100% */
+    .saju-analysis-grid div[data-testid="column"] {
+        flex: 0 0 19.5% !important;
+        max-width: 19.5% !important;
+    }
+    .saju-analysis-grid div[data-testid="column"]:first-child {
+        flex: 0 0 22% !important;
+        max-width: 22% !important;
     }
     
     /* 가변형 폰트 및 모바일 최적화 조정 */
@@ -95,17 +110,18 @@ st.markdown("""
     /* 카드 공통 스타일 (이미지 1 참조) - 패딩 축소 */
     .saju-card {
         border: 1px solid #e0e0e0;
-        border-radius: 12px;
-        padding: 10px 5px; /* 패딩 축소 */
+        border-radius: 10px;
+        padding: 8px 4px;
         text-align: center;
         background-color: white;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        margin-bottom: 5px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        margin-bottom: 4px;
         transition: all 0.2s ease;
-        min-height: 180px; /* 높이 약간 조절 */
+        height: 185px !important; /* 높이 고정으로 가로 정렬 안정화 */
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        justify-content: space-between;
+        overflow: hidden;
     }
     .saju-card.selected {
         border: 2px solid #d4af37 !important;
@@ -124,22 +140,25 @@ st.markdown("""
         border-left: 5px solid #3498db;
     }
 
-    /* 팝업 스타일 커스텀 (이미지 2의 드롭다운 스타일 재현) */
+    /* 팝업 스타일 커스텀: 텍스트가 넘치면 축소되도록 보호 */
     div[data-testid="stPopover"] > button {
         background-color: #ffffff !important;
         border: 1px solid #d1d5db !important;
-        border-radius: 8px !important;
-        padding: 8px 12px !important;
+        border-radius: 6px !important;
+        padding: 4px 2px !important;
         width: 100% !important;
-        height: auto !important;
+        height: 2.2rem !important;
         color: #374151 !important;
-        font-size: 0.85rem !important;
+        font-size: clamp(0.6rem, 2vw, 0.75rem) !important;
         font-weight: 500 !important;
         box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
         text-align: center !important;
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
     }
     div[data-testid="stPopover"] > button:after {
         content: " ˅";
@@ -410,28 +429,31 @@ def main():
             """, unsafe_allow_html=True)
 
         def render_analysis_table(title, instruction, row_labels, column_headers, data_grid):
-            """이미지 2 스타일의 상세 분석 테이블 (전역 CSS에 의해 수평 고정)"""
+            """이미지 2 스타일의 상세 분석 테이블 (Rigid Grid 적용)"""
             st.markdown(f"### 🔍 {title} 🔗")
             st.markdown(f"<div class='analysis-summary-box'>{instruction}</div>", unsafe_allow_html=True)
             
+            # 컨테이너 시작 (비율 고정 CSS 클래스 적용)
+            st.markdown('<div class="saju-analysis-grid">', unsafe_allow_html=True)
+            
             # 테이블 헤더
-            cols = st.columns([1.5] + [1] * len(column_headers))
-            cols[0].markdown(f"<div style='background:#f1f3f5; border-radius:8px; padding:8px 4px; text-align:center; font-weight:bold; font-size:clamp(0.65rem, 2.2vw, 0.85rem); color:#4b5563;'>분석 항목</div>", unsafe_allow_html=True)
+            cols = st.columns([1.13] + [1] * len(column_headers))
+            cols[0].markdown(f"<div style='background:#f1f3f5; border-radius:8px; padding:6px 2px; text-align:center; font-weight:bold; font-size:clamp(0.6rem, 2vw, 0.8rem); color:#4b5563; white-space:nowrap; overflow:hidden;'>분석 항목</div>", unsafe_allow_html=True)
             for i, header in enumerate(column_headers):
-                cols[i+1].markdown(f"<div style='background:#f1f3f5; border-radius:8px; padding:8px 4px; text-align:center; font-weight:bold; font-size:clamp(0.65rem, 2.2vw, 0.85rem); color:#4b5563;'>{header}</div>", unsafe_allow_html=True)
+                cols[i+1].markdown(f"<div style='background:#f1f3f5; border-radius:8px; padding:6px 2px; text-align:center; font-weight:bold; font-size:clamp(0.6rem, 2vw, 0.8rem); color:#4b5563; white-space:nowrap; overflow:hidden;'>{header}</div>", unsafe_allow_html=True)
             
             # 데이터 행
             for row_idx, label in enumerate(row_labels):
-                cols = st.columns([1.5] + [1] * len(column_headers))
-                cols[0].markdown(f"<div style='background:#f8f9fa; border-radius:8px; padding:10px 6px; font-weight:bold; font-size:clamp(0.6rem, 2vw, 0.8rem); height:100%; display:flex; align-items:center; color:#6b7280;'>{label}</div>", unsafe_allow_html=True)
+                cols = st.columns([1.13] + [1] * len(column_headers))
+                cols[0].markdown(f"<div style='background:#f8f9fa; border-radius:8px; padding:8px 4px; font-weight:bold; font-size:clamp(0.55rem, 1.8vw, 0.75rem); height:100%; display:flex; align-items:center; color:#6b7280; overflow:hidden;'>{label}</div>", unsafe_allow_html=True)
                 for col_idx, value in enumerate(data_grid[row_idx]):
                     with cols[col_idx+1]:
-                        # 팝업 내부에 상세 설명 표시 (SAJU_TERMS 연동)
                         clean_val = value.replace(" ˅", "").strip()
                         with st.popover(value if value != "-" else " - ", use_container_width=True):
                             desc = SAJU_TERMS.get(clean_val, "상세 정보가 준비 중입니다.")
                             st.markdown(f"**{clean_val}**")
                             st.caption(desc)
+            st.markdown('</div>', unsafe_allow_html=True)
 
         # --- 사주 4주 명식 (이미지 2 스타일로 통합) ---
         p_keys = ['hour', 'day', 'month', 'year']
@@ -479,7 +501,7 @@ def main():
         st.caption(f"현재 대운수: **{daeun_info['num']}** ({daeun_info['direction']})")
         
         daeun_list = data['fortune']['list']
-        st.markdown('<div class="saju-horizontal-grid-fixed">', unsafe_allow_html=True)
+        st.markdown('<div class="saju-grid-5">', unsafe_allow_html=True)
         for i in range(0, len(daeun_list), 5):
             d_cols = st.columns(5)
             chunk = daeun_list[i:i+5]
@@ -600,6 +622,7 @@ def main():
 
         if seyun_list:
             st.subheader(f"📅 세운(年運): {seyun_start_year}년 ~ {seyun_start_year+9}년")
+            st.markdown('<div class="saju-grid-5">', unsafe_allow_html=True)
             for i in range(0, len(seyun_list), 5):
                 s_cols = st.columns(5)
                 chunk = seyun_list[i:i+5]
@@ -622,6 +645,7 @@ def main():
                         if st.button(f"{s_year}년 선택", key=f"btn_year_{s_year}", use_container_width=True):
                             st.session_state['selected_seyun_year'] = s_year
                             st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
 
             # --- 세운 상세 상호작용 분석 섹션 (NEW) ---
             if 'selected_seyun_year' in st.session_state:
@@ -711,6 +735,7 @@ def main():
             cur_seyun = next((s for s in seyun_list if s['year'] == sel_year), seyun_list[0] if seyun_list else {})
             
             # 월운(Wolun) 시각화 - 5열 그리드로 통일 (이미지 4, 6 스타일 계승)
+            st.markdown('<div class="saju-grid-5">', unsafe_allow_html=True)
             for i in range(1, 13, 5):
                 w_cols = st.columns(5)
                 chunk = list(range(i, min(i+5, 13)))
@@ -738,6 +763,7 @@ def main():
                         if st.button(f"{m}월 선택", key=f"btn_month_{m}", use_container_width=True):
                             st.session_state['selected_wolun_month'] = m
                             st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
 
         # --- 월운 상세 상호작용 분석 섹션 (NEW) ---
         sel_month = st.session_state.get('selected_wolun_month')
