@@ -56,39 +56,26 @@ st.markdown("""
         margin: 0 auto !important;
     }
     
-    /* [핵심] 전역 강제 수평 해제 (입력폼 보호) */
-    /* 특정 사주 컴포넌트 내부에서만 수평 정렬을 강제하도록 스코프 조정 */
-    
-    .saju-grid-5 div[data-testid="stHorizontalBlock"],
-    .saju-analysis-grid div[data-testid="stHorizontalBlock"] {
+    /* [심폐소생] 4개 이상의 컬럼(그리드, 표)만 선택하여 가로 배치 강제 */
+    /* 입력폼(2~3열)은 이 규칙에서 자동 제외되어 정상적으로 보임 */
+    div[data-testid="stHorizontalBlock"]:has(> div:nth-child(4)) {
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: stretch !important;
         width: 100% !important;
         overflow-x: auto !important;
-        gap: 4px !important;
+        gap: 6px !important;
     }
 
-    /* 5열 카드 그리드 전용 (대운, 세운, 월운) */
-    .saju-grid-5 div[data-testid="column"] {
-        flex: 0 0 calc(20% - 4px) !important;
-        min-width: 65px !important; /* 최소 너비 확보로 텍스트 공간 보장 */
-        max-width: none !important;
-    }
-
-    /* 상세 분석 표 전용 (레이블은 확보, 데이터는 균등) */
-    .saju-analysis-grid div[data-testid="column"] {
+    div[data-testid="stHorizontalBlock"]:has(> div:nth-child(4)) div[data-testid="column"] {
         flex: 1 1 0% !important;
         min-width: 60px !important;
     }
-    .saju-analysis-grid div[data-testid="column"]:first-child {
-        flex: 0 0 85px !important; /* 분석 항목 레이블 너비 확보 */
-        min-width: 85px !important;
-    }
 
-    /* 오행 분포 등 일반적인 수평 블록은 스트림릿 기본값 유지 (세로 쌓임 허용) */
-    div[data-testid="stHorizontalBlock"]:not(.saju-grid-5 *):not(.saju-analysis-grid *) {
-        flex-wrap: wrap !important; /* 모바일에서 필요 시 세로로 쌓이게 복구 */
+    /* 첫번째 컬럼(레이블 영역) 비율 확보 */
+    div[data-testid="stHorizontalBlock"]:has(> div:nth-child(4)) div[data-testid="column"]:first-child {
+        flex: 1.5 1 0% !important;
+        min-width: 85px !important;
     }
     
     /* 가변형 폰트 및 모바일 최적화 조정 */
@@ -270,8 +257,7 @@ def main():
         if not api_key:
             st.error("⚠️ API Key 설정 필요 (Secrets)")
 
-    # 입력 폼 (saju-form-container로 감싸 전역 수평 고정 제외)
-    st.markdown('<div class="saju-form-container">', unsafe_allow_html=True)
+    # 입력 폼 (이미지 1 스타일)
     with st.container():
         row1_c1, row1_c2 = st.columns(2)
         with row1_c1:
@@ -436,9 +422,6 @@ def main():
             st.markdown(f"### 🔍 {title} 🔗")
             st.markdown(f"<div class='analysis-summary-box'>{instruction}</div>", unsafe_allow_html=True)
             
-            # 컨테이너 시작 (비율 고정 CSS 클래스 적용)
-            st.markdown('<div class="saju-analysis-grid">', unsafe_allow_html=True)
-            
             # 테이블 헤더 (비율 재조정: 레이블 가독성 중심)
             cols = st.columns([1.5] + [1] * len(column_headers))
             cols[0].markdown(f"<div style='background:#f1f3f5; border-radius:8px; padding:6px 2px; text-align:center; font-weight:bold; font-size:clamp(0.6rem, 1.8vw, 0.75rem); color:#4b5563; white-space:nowrap; overflow:hidden;'>분석 항목</div>", unsafe_allow_html=True)
@@ -456,7 +439,7 @@ def main():
                             desc = SAJU_TERMS.get(clean_val, "상세 정보가 준비 중입니다.")
                             st.markdown(f"**{clean_val}**")
                             st.caption(desc)
-            st.markdown('</div>', unsafe_allow_html=True)
+            # Removed: st.markdown('</div>', unsafe_allow_html=True)
 
         # --- 사주 4주 명식 (이미지 2 스타일로 통합) ---
         p_keys = ['hour', 'day', 'month', 'year']
@@ -487,7 +470,6 @@ def main():
         # 오행 분포 시각화 (이미지 3 스타일)
         elems = data['five_elements']
         st.markdown("<h3 style='display:flex; align-items:center; gap:8px;'>🔮 오행의 기운 분포</h3>", unsafe_allow_html=True)
-        st.markdown('<div class="saju-grid-5">', unsafe_allow_html=True) # 오행도 5열 그리드 적용
         o_cols = st.columns(5)
         labels = ["목", "화", "토", "금", "수"]
         for idx, lbl in enumerate(labels):
@@ -497,7 +479,6 @@ def main():
                 st.markdown(f"<div style='font-size:1.8rem; font-weight:400; color:#1f2937;'>{val}개</div>", unsafe_allow_html=True)
                 progress_val = min(val / 8, 1.0)
                 st.progress(progress_val)
-        st.markdown('</div>', unsafe_allow_html=True)
 
         # --- 대운 리스트 (이미지 1 스타일, 5열 그리드 강제) ---
         daeun_info = data['fortune']
@@ -505,7 +486,7 @@ def main():
         st.caption(f"현재 대운수: **{daeun_info['num']}** ({daeun_info['direction']})")
         
         daeun_list = data['fortune']['list']
-        st.markdown('<div class="saju-grid-5">', unsafe_allow_html=True)
+        # Removed: st.markdown('<div class="saju-grid-5">', unsafe_allow_html=True)
         for i in range(0, len(daeun_list), 5):
             d_cols = st.columns(5)
             chunk = daeun_list[i:i+5]
@@ -626,7 +607,6 @@ def main():
 
         if seyun_list:
             st.subheader(f"📅 세운(年運): {seyun_start_year}년 ~ {seyun_start_year+9}년")
-            st.markdown('<div class="saju-grid-5">', unsafe_allow_html=True)
             for i in range(0, len(seyun_list), 5):
                 s_cols = st.columns(5)
                 chunk = seyun_list[i:i+5]
@@ -649,7 +629,6 @@ def main():
                         if st.button(f"{s_year}년 선택", key=f"btn_year_{s_year}", use_container_width=True):
                             st.session_state['selected_seyun_year'] = s_year
                             st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
 
             # --- 세운 상세 상호작용 분석 섹션 (NEW) ---
             if 'selected_seyun_year' in st.session_state:
@@ -739,7 +718,6 @@ def main():
             cur_seyun = next((s for s in seyun_list if s['year'] == sel_year), seyun_list[0] if seyun_list else {})
             
             # 월운(Wolun) 시각화 - 5열 그리드로 통일 (이미지 4, 6 스타일 계승)
-            st.markdown('<div class="saju-grid-5">', unsafe_allow_html=True)
             for i in range(1, 13, 5):
                 w_cols = st.columns(5)
                 chunk = list(range(i, min(i+5, 13)))
@@ -767,7 +745,6 @@ def main():
                         if st.button(f"{m}월 선택", key=f"btn_month_{m}", use_container_width=True):
                             st.session_state['selected_wolun_month'] = m
                             st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
 
         # --- 월운 상세 상호작용 분석 섹션 (NEW) ---
         sel_month = st.session_state.get('selected_wolun_month')
