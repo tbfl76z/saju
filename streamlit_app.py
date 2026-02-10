@@ -425,28 +425,44 @@ def main():
             """, unsafe_allow_html=True)
 
         def render_analysis_table(title, instruction, row_labels, column_headers, data_grid):
-            """이미지 2 스타일의 상세 분석 테이블 (Rigid Grid 적용)"""
+            """전통적인 HTML 테이블을 사용하여 모바일에서도 절대로 세로로 쌓이지 않게 고정"""
             st.markdown(f"### 🔍 {title} 🔗")
             st.markdown(f"<div class='analysis-summary-box'>{instruction}</div>", unsafe_allow_html=True)
             
-            # 테이블 헤더 (비율 재조정: 레이블 가독성 중심)
-            cols = st.columns([1.5] + [1] * len(column_headers))
-            cols[0].markdown(f"<div style='background:#f1f3f5; border-radius:8px; padding:6px 2px; text-align:center; font-weight:bold; font-size:clamp(0.6rem, 1.8vw, 0.75rem); color:#4b5563; white-space:nowrap; overflow:hidden;'>분석 항목</div>", unsafe_allow_html=True)
-            for i, header in enumerate(column_headers):
-                cols[i+1].markdown(f"<div style='background:#f1f3f5; border-radius:8px; padding:6px 2px; text-align:center; font-weight:bold; font-size:clamp(0.6rem, 1.8vw, 0.75rem); color:#4b5563; white-space:nowrap; overflow:hidden;'>{header}</div>", unsafe_allow_html=True)
+            # HTML/CSS 기반의 완벽 고정 테이블 생성
+            table_html = f"""
+            <div style="width:100%; overflow-x:auto;">
+                <table style="width:100%; border-collapse: separate; border-spacing: 4px; table-layout: fixed;">
+                    <thead>
+                        <tr>
+                            <th style="width:25%; background:#f1f3f5; border-radius:6px; padding:10px 4px; font-size:0.75rem; color:#4b5563;">분석 항목</th>
+                            {"".join([f'<th style="width:18.75%; background:#f1f3f5; border-radius:6px; padding:10px 4px; font-size:0.75rem; color:#4b5563;">{h}</th>' for h in column_headers])}
+                        </tr>
+                    </thead>
+                    <tbody>
+            """
             
-            # 데이터 행
             for row_idx, label in enumerate(row_labels):
-                cols = st.columns([1.5] + [1] * len(column_headers))
-                cols[0].markdown(f"<div style='background:#f8f9fa; border-radius:8px; padding:8px 4px; font-weight:bold; font-size:clamp(0.55rem, 1.8vw, 0.7rem); height:100%; display:flex; align-items:center; color:#6b7280; line-height:1.1;'>{label}</div>", unsafe_allow_html=True)
-                for col_idx, value in enumerate(data_grid[row_idx]):
-                    with cols[col_idx+1]:
-                        clean_val = value.replace(" ˅", "").strip()
-                        with st.popover(value if value != "-" else " - ", use_container_width=True):
-                            desc = SAJU_TERMS.get(clean_val, "상세 정보가 준비 중입니다.")
-                            st.markdown(f"**{clean_val}**")
-                            st.caption(desc)
-            # Removed: st.markdown('</div>', unsafe_allow_html=True)
+                table_html += f"""
+                        <tr>
+                            <td style="background:#f8f9fa; border-radius:6px; padding:8px 4px; font-weight:bold; font-size:0.7rem; color:#6b7280; text-align:left;">{label}</td>
+                """
+                for val in data_grid[row_idx]:
+                    clean_val = val.replace(" ˅", "").strip()
+                    # 팝업 대신 텍스트로 바로 표시 (모바일 안정성 극대화)
+                    table_html += f"""
+                            <td style="background:#ffffff; border:1px solid #e5e7eb; border-radius:6px; padding:8px 2px; font-size:0.75rem; color:#374151; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                {val}
+                            </td>
+                    """
+                table_html += "</tr>"
+            
+            table_html += """
+                    </tbody>
+                </table>
+            </div>
+            """
+            st.markdown(table_html, unsafe_allow_html=True)
 
         # --- 사주 4주 명식 (이미지 2 스타일로 통합) ---
         p_keys = ['hour', 'day', 'month', 'year']
