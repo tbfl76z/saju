@@ -198,11 +198,6 @@ def main():
 
     with st.sidebar:
         api_key = st.secrets.get("GOOGLE_API_KEY", "")
-        st.markdown("### 📖 이용 안내")
-        st.info("이제 외부 사이트 이동 없이 바로 정보를 입력하여 풀이를 받으실 수 있습니다.")
-        st.caption("1. 이름과 생년월일시 입력")
-        st.caption("2. [사주 명식 계산] 버튼 클릭")
-        st.caption("3. 결과 확인 후 [심층 분석 보고서 생성] 클릭")
         if not api_key:
             st.error("⚠️ API Key 설정 필요 (Secrets)")
 
@@ -336,73 +331,41 @@ def main():
                     if len(items) > 1:
                         st.divider()
 
-        # 4주 명식 고정 레이아웃 (HTML Table) - 2x4 격자 중심
-        table_html = f"""
-        <div style="width: 100%; overflow-x: hidden;">
-        <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 0.8rem; background-color: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); table-layout: fixed;">
-            <tr style="background-color: #f8f9fa; font-weight: bold;">
-                <td style="padding: 5px; border: 1px solid #eee; width: 15%;">구분</td>
-                <td style="padding: 5px; border: 1px solid #eee; width: 21.25%;">시주</td>
-                <td style="padding: 5px; border: 1px solid #eee; width: 21.25%;">일주</td>
-                <td style="padding: 5px; border: 1px solid #eee; width: 21.25%;">월주</td>
-                <td style="padding: 5px; border: 1px solid #eee; width: 21.25%;">연주</td>
-            </tr>
-            <tr>
-                <td style="padding: 5px; border: 1px solid #eee; color: #666; font-size: 0.75rem;">천간/십성</td>
-                <td style="padding: 5px; border: 1px solid #eee;">
-                    <div style="font-size: 0.7rem; color: #d4af37;">{data['ten_gods']['hour']}</div>
-                    <div style="font-size: 1.2rem; font-weight: bold;">{pillars['hour']['stem']}</div>
-                </td>
-                <td style="padding: 5px; border: 1px solid #eee;">
-                    <div style="font-size: 0.7rem; color: #d4af37;">{data['ten_gods']['day']}</div>
-                    <div style="font-size: 1.2rem; font-weight: bold; color: #d32f2f;">{pillars['day']['stem']}</div>
-                </td>
-                <td style="padding: 5px; border: 1px solid #eee;">
-                    <div style="font-size: 0.7rem; color: #d4af37;">{data['ten_gods']['month']}</div>
-                    <div style="font-size: 1.2rem; font-weight: bold;">{pillars['month']['stem']}</div>
-                </td>
-                <td style="padding: 5px; border: 1px solid #eee;">
-                    <div style="font-size: 0.7rem; color: #d4af37;">{data['ten_gods']['year']}</div>
-                    <div style="font-size: 1.2rem; font-weight: bold;">{pillars['year']['stem']}</div>
-                </td>
-            </tr>
-            <tr>
-                <td style="padding: 5px; border: 1px solid #eee; color: #666; font-size: 0.75rem;">지지/십성</td>
-                <td style="padding: 5px; border: 1px solid #eee;">
-                    <div style="font-size: 1.2rem; font-weight: bold;">{pillars['hour']['branch']}</div>
-                    <div style="font-size: 0.7rem; color: #d63384;">{data['jiji_ten_gods']['hour']}</div>
-                </td>
-                <td style="padding: 5px; border: 1px solid #eee;">
-                    <div style="font-size: 1.2rem; font-weight: bold;">{pillars['day']['branch']}</div>
-                    <div style="font-size: 0.7rem; color: #d63384;">{data['jiji_ten_gods']['day']}</div>
-                </td>
-                <td style="padding: 5px; border: 1px solid #eee;">
-                    <div style="font-size: 1.2rem; font-weight: bold;">{pillars['month']['branch']}</div>
-                    <div style="font-size: 0.7rem; color: #d63384;">{data['jiji_ten_gods']['month']}</div>
-                </td>
-                <td style="padding: 5px; border: 1px solid #eee;">
-                    <div style="font-size: 1.2rem; font-weight: bold;">{pillars['year']['branch']}</div>
-                    <div style="font-size: 0.7rem; color: #d63384;">{data['jiji_ten_gods']['year']}</div>
-                </td>
-            </tr>
-            <tr style="font-size: 0.7rem;">
-                <td style="padding: 5px; border: 1px solid #eee; color: #666;">12운성</td>
-                <td style="padding: 5px; border: 1px solid #eee; color: #1976d2;">{data['twelve_growth']['hour']}</td>
-                <td style="padding: 5px; border: 1px solid #eee; color: #1976d2;">{data['twelve_growth']['day']}</td>
-                <td style="padding: 5px; border: 1px solid #eee; color: #1976d2;">{data['twelve_growth']['month']}</td>
-                <td style="padding: 5px; border: 1px solid #eee; color: #1976d2;">{data['twelve_growth']['year']}</td>
-            </tr>
-            <tr style="font-size: 0.65rem;">
-                <td style="padding: 5px; border: 1px solid #eee; color: #666;">신살/관계</td>
-                <td style="padding: 5px; border: 1px solid #eee; color: #198754;">{data['sinsal_details']['hour']['sinsal'][:10]}..</td>
-                <td style="padding: 5px; border: 1px solid #eee; color: #198754;">{data['sinsal_details']['day']['sinsal'][:10]}..</td>
-                <td style="padding: 5px; border: 1px solid #eee; color: #198754;">{data['sinsal_details']['month']['sinsal'][:10]}..</td>
-                <td style="padding: 5px; border: 1px solid #eee; color: #198754;">{data['sinsal_details']['year']['sinsal'][:10]}..</td>
-            </tr>
-        </table>
+        # 4주 명식 고정 레이아웃 - 모바일 최적화 고품격 2x4 블록 디자인
+        def get_pill_html(top_label, main_text, sub_label, color="#2c3e50", sub_color="#666"):
+            return f"""
+            <div style="background: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 6px; text-align: center; box-shadow: 2px 2px 5px rgba(0,0,0,0.03);">
+                <div style="font-size: 0.7rem; color: #d4af37; margin-bottom: 2px;">{top_label}</div>
+                <div style="font-size: 1.4rem; font-weight: bold; color: {color};">{main_text}</div>
+                <div style="font-size: 0.75rem; color: {sub_color}; margin-top: 2px;">{sub_label}</div>
+            </div>
+            """
+
+        st.markdown(f"""
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 10px;">
+            <div style="grid-column: span 1; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #666; font-size: 0.8rem; background: #f8f9fa; border-radius: 8px;">천간</div>
+            {get_pill_html(data['ten_gods']['hour'], pillars['hour']['stem'], '시주')}
+            {get_pill_html(data['ten_gods']['day'], pillars['day']['stem'], '일주', color='#d32f2f')}
+            {get_pill_html(data['ten_gods']['month'], pillars['month']['stem'], '월주')}
+            {get_pill_html(data['ten_gods']['year'], pillars['year']['stem'], '연주')}
+            
+            <div style="grid-column: span 1; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #666; font-size: 0.8rem; background: #f8f9fa; border-radius: 8px;">지지</div>
+            {get_pill_html('시지', pillars['hour']['branch'], data['jiji_ten_gods']['hour'], sub_color="#d63384")}
+            {get_pill_html('일지', pillars['day']['branch'], data['jiji_ten_gods']['day'], sub_color="#d63384")}
+            {get_pill_html('월지', pillars['month']['branch'], data['jiji_ten_gods']['month'], sub_color="#d63384")}
+            {get_pill_html('연지', pillars['year']['branch'], data['jiji_ten_gods']['year'], sub_color="#d63384")}
         </div>
-        """
-        st.markdown(table_html, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
+        
+        # 12운성 및 신살 한 줄 표시
+        st.markdown(f"""
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; margin-bottom: 15px; text-align: center;">
+            <div style="font-size: 0.7rem; color: #1976d2; border: 1px solid #e3f2fd; border-radius: 6px; padding: 3px;">12운성<br/>{data['twelve_growth']['hour']}</div>
+            <div style="font-size: 0.7rem; color: #1976d2; border: 1px solid #e3f2fd; border-radius: 6px; padding: 3px;">12운성<br/>{data['twelve_growth']['day']}</div>
+            <div style="font-size: 0.7rem; color: #1976d2; border: 1px solid #e3f2fd; border-radius: 6px; padding: 3px;">12운성<br/>{data['twelve_growth']['month']}</div>
+            <div style="font-size: 0.7rem; color: #1976d2; border: 1px solid #e3f2fd; border-radius: 6px; padding: 3px;">12운성<br/>{data['twelve_growth']['year']}</div>
+        </div>
+        """, unsafe_allow_html=True)
         
         # 공망 및 지지 관계 표시
         col_g1, col_g2 = st.columns(2)
@@ -515,29 +478,36 @@ def main():
                         "interaction": ", ".join(inter_rels) if inter_rels else "평온"
                     }
 
-                # 시각화 표 구성
-                i_cols = st.columns(5)
+                # 모바일 최적화 고품격 상세 분석 테이블 (HTML)
                 labels = ["분석 항목", "시주(時)", "일주(日)", "월주(月)", "연주(년)"]
-                for i, l in enumerate(labels):
-                    i_cols[i].markdown(f"<div style='text-align:center; font-weight:bold; background-color:#f0f2f6; padding:8px; border-radius:5px;'>{l}</div>", unsafe_allow_html=True)
-                
                 p_keys = ['hour', 'day', 'month', 'year']
                 p_data = {k: get_pillar_relation(k) for k in p_keys}
                 
                 row_items = [
                     ("원국 간지", [p_data[k]['ganzhi'] for k in p_keys]),
-                    ("해당 기둥 십성", [p_data[k]['ten_god'] for k in p_keys]),
-                    ("대운 기준 운성", [p_data[k]['growth'] for k in p_keys]),
+                    ("해당 십성", [p_data[k]['ten_god'] for k in p_keys]),
+                    ("대운 운성", [p_data[k]['growth'] for k in p_keys]),
                     ("적용 신살", [p_data[k]['sinsal'] for k in p_keys]),
-                    ("합·충·형·파·해", [p_data[k]['interaction'] for k in p_keys])
+                    ("합·충·관계", [p_data[k]['interaction'] for k in p_keys])
                 ]
                 
+                table_html = f"""
+                <div style="overflow-x: auto; margin-bottom: 20px;">
+                <table style="width: 100%; border-collapse: separate; border-spacing: 5px; text-align: center; font-size: 0.75rem;">
+                    <tr>
+                        {"".join(f'<th style="background-color: #f1f3f5; border-radius: 8px; padding: 8px; min-width: 60px;">{l}</th>' for l in labels)}
+                    </tr>
+                """
                 for label, vals in row_items:
-                    r_cols = st.columns(5)
-                    r_cols[0].markdown(f"<div style='text-align:center; padding:12px; font-weight:700; color:#444; border-bottom:1px solid #eee;'>{label}</div>", unsafe_allow_html=True)
-                    for c_idx, val in enumerate(vals):
-                        with r_cols[c_idx+1]:
-                            term_popover(label, val, f"daeun_{label}_{c_idx}")
+                    table_html += "<tr>"
+                    table_html += f'<td style="background-color: #f8f9fa; border-radius: 8px; padding: 8px; font-weight: bold; color: #444;">{label}</td>'
+                    for val in vals:
+                        # 텍스트 길이에 따른 폰트 조절
+                        f_size = "0.75rem" if len(val) <= 4 else "0.65rem"
+                        table_html += f'<td style="background-color: #ffffff; border: 1px solid #eee; border-radius: 8px; padding: 8px; font-size: {f_size}; color: #333;">{val} ˅</td>'
+                    table_html += "</tr>"
+                table_html += "</table></div>"
+                st.markdown(table_html, unsafe_allow_html=True)
                 
                 st.markdown("---")
 
@@ -663,28 +633,32 @@ def main():
                     
                     sy_data = [get_seyun_relation(t[1], t[2]) for t in targets if t[1]]
                     
-                    # 5-6열 테이블 (항목 + 분석 대상 수만큼)
-                    num_cols = len(sy_data) + 1
-                    syc_cols = st.columns(num_cols)
-                    
+                    # 모바일 최적화 고품격 세운 상세 분석 테이블 (HTML)
                     syc_labels = ["분석 항목"] + [d['name'] for d in sy_data]
-                    for i, l in enumerate(syc_labels):
-                        syc_cols[i].markdown(f"<div style='text-align:center; font-weight:bold; background-color:#fff0f6; padding:8px; border-radius:5px; font-size:0.85rem;'>{l}</div>", unsafe_allow_html=True)
-                    
                     sy_row_items = [
                         ("대상 간지", [d['ganzhi'] for d in sy_data]),
                         ("대상 십성", [d['ten_god'] for d in sy_data]),
-                        ("세운 기준 운성", [d['growth'] for d in sy_data]),
+                        ("세운 운성", [d['growth'] for d in sy_data]),
                         ("적용 신살", [d['sinsal'] for d in sy_data]),
                         ("상호 관계", [d['interaction'] for d in sy_data])
                     ]
                     
+                    table_html = f"""
+                    <div style="overflow-x: auto; margin-bottom: 20px;">
+                    <table style="width: 100%; border-collapse: separate; border-spacing: 4px; text-align: center; font-size: 0.75rem;">
+                        <tr>
+                            {"".join(f'<th style="background-color: #f3f0ff; border-radius: 6px; padding: 6px; min-width: 55px;">{l}</th>' for l in syc_labels)}
+                        </tr>
+                    """
                     for label, vals in sy_row_items:
-                        r_cols = st.columns(num_cols)
-                        r_cols[0].markdown(f"<div style='text-align:center; padding:10px; font-weight:700; color:#444; border-bottom:1px solid #eee; font-size:0.8rem;'>{label}</div>", unsafe_allow_html=True)
-                        for c_idx, val in enumerate(vals):
-                            with r_cols[c_idx+1]:
-                                term_popover(label, val, f"seyun_{label}_{c_idx}")
+                        table_html += "<tr>"
+                        table_html += f'<td style="background-color: #f8f9fa; border-radius: 6px; padding: 6px; font-weight: bold; color: #444;">{label}</td>'
+                        for val in vals:
+                            f_size = "0.75rem" if len(val) <= 4 else "0.65rem"
+                            table_html += f'<td style="background-color: #ffffff; border: 1px solid #eee; border-radius: 6px; padding: 6px; font-size: {f_size};">{val} ˅</td>'
+                        table_html += "</tr>"
+                    table_html += "</table></div>"
+                    st.markdown(table_html, unsafe_allow_html=True)
                     
                     st.markdown("---")
 
@@ -766,9 +740,12 @@ def main():
             ]
             mw_data = []
             for k, label in mw_targets:
-                if k == 'daeun': gz = sel_daeun['ganzhi']
-                elif k == 'seyun': gz = cur_seyun['ganzhi']
-                else: gz = pillars[k]['ganzhi']
+                if k == 'daeun': gz = sel_daeun['ganzhi'] if sel_daeun else "-"
+                elif k == 'seyun': gz = cur_seyun['ganzhi'] if cur_seyun else "-"
+                else: 
+                    # pillars[k]가 딕셔너리이며 'pillar' 키를 가지고 있는지 안전하게 확인
+                    gz_info = pillars.get(k, {})
+                    gz = gz_info.get('pillar', '-') if isinstance(gz_info, dict) else "-"
                 
                 # 관계 추출
                 w_gz = wol_data['ganzhi']
@@ -791,11 +768,14 @@ def main():
                     "interaction": ", ".join(rels) if rels else "평온"
                 })
 
-            mw_cols = st.columns(7)
-            mw_labels = ["항목"] + [d['label'] for d in mw_data]
-            for i, l in enumerate(mw_labels):
-                mw_cols[i].markdown(f"<div style='text-align:center; font-weight:bold; background-color:#fffdf0; padding:5px; border-radius:3px; font-size:0.75rem;'>{l}</div>", unsafe_allow_html=True)
-            
+            mw_cols_labels = ["항목", "연주", "월주", "일주", "시주", "대운", "세운"]
+            table_html = f"""
+            <div style="overflow-x: auto; margin-bottom: 20px;">
+            <table style="width: 100%; border-collapse: separate; border-spacing: 4px; text-align: center; font-size: 0.7rem;">
+                <tr>
+                    {"".join(f'<th style="background-color: #fff9db; border-radius: 6px; padding: 6px; min-width: 50px;">{l}</th>' for l in mw_cols_labels)}
+                </tr>
+            """
             row_defs = [
                 ("간지", [d['ganzhi'] for d in mw_data]),
                 ("십성", [d['ten_god'] for d in mw_data]),
@@ -803,10 +783,13 @@ def main():
                 ("상호", [d['interaction'] for d in mw_data])
             ]
             for r_lab, r_vals in row_defs:
-                rcs = st.columns(7)
-                rcs[0].markdown(f"<div style='text-align:center; padding:5px; font-weight:bold; color:#666; font-size:0.7rem;'>{r_lab}</div>", unsafe_allow_html=True)
-                for ci, rv in enumerate(r_vals):
-                    rcs[ci+1].markdown(f"<div style='text-align:center; padding:5px; font-size:0.75rem;'>{rv}</div>", unsafe_allow_html=True)
+                table_html += "<tr>"
+                table_html += f'<td style="background-color: #f8f9fa; border-radius: 6px; padding: 6px; font-weight: bold;">{r_lab}</td>'
+                for rv in r_vals:
+                    table_html += f'<td style="background-color: #ffffff; border: 1px solid #eee; border-radius: 6px; padding: 6px;">{rv}</td>'
+                table_html += "</tr>"
+            table_html += "</table></div>"
+            st.markdown(table_html, unsafe_allow_html=True)
 
         st.divider()
         
