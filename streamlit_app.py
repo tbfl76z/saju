@@ -352,10 +352,10 @@ def main():
             <tr style="height: 4px;"></tr>
             <tr>
                 <td style="width: 15%; background: #f8f9fa; border-radius: 8px; text-align: center; font-weight: bold; color: #666; font-size: 0.8rem;">운성</td>
-                {get_pill_html_table('12운성', data['twelve_growth']['hour'], '태', color="#1976d2", sub_color="#1976d2")}
-                {get_pill_html_table('12운성', data['twelve_growth']['day'], '장생', color="#1976d2", sub_color="#1976d2")}
-                {get_pill_html_table('12운성', data['twelve_growth']['month'], '태', color="#1976d2", sub_color="#1976d2")}
-                {get_pill_html_table('12운성', data['twelve_growth']['year'], '건록', color="#1976d2", sub_color="#1976d2")}
+                {get_pill_html_table('시주', data['twelve_growth']['hour'], '12운성', color="#1976d2", sub_color="#1976d2")}
+                {get_pill_html_table('일주', data['twelve_growth']['day'], '12운성', color="#1976d2", sub_color="#1976d2")}
+                {get_pill_html_table('월주', data['twelve_growth']['month'], '12운성', color="#1976d2", sub_color="#1976d2")}
+                {get_pill_html_table('연주', data['twelve_growth']['year'], '12운성', color="#1976d2", sub_color="#1976d2")}
             </tr>
         </table>
         """, unsafe_allow_html=True)
