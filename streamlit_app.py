@@ -49,9 +49,10 @@ st.markdown("""
         transform: translateY(-2px);
     }
     
-    /* 메인 컨테이너 (너비 제한 제거, 중앙 정렬은 유지) */
+    /* 메인 컨테이너 (600px로 콤팩트하게 제한하여 늘어짐 방지) */
     .main .block-container {
-        padding-top: 2rem !important;
+        max-width: 600px !important;
+        padding-top: 1.5rem !important;
         margin: 0 auto !important;
     }
     
@@ -61,33 +62,34 @@ st.markdown("""
         flex-wrap: nowrap !important;
         align-items: stretch !important;
         width: 100% !important;
-        overflow-x: auto !important; /* 내용이 넘칠 경우 수평 스크롤 허용 */
-        gap: 8px !important;
+        overflow-x: auto !important;
+        gap: 6px !important;
     }
     
-    /* 각 컬럼의 최소 너비 확보하여 찌그러짐 방지 */
     div[data-testid="column"] {
         flex: 1 1 0% !important;
-        min-width: 70px !important; /* 분석 표 버튼이 깨지지 않는 최소 너비 */
+        min-width: 65px !important;
     }
 
-    /* 상세 분석 표의 첫 번째 '분석 항목' 열 너비 비율 조정 */
-    /* st.columns([1.5, 1, 1, 1, 1]) 가 설정되어 있어도 CSS로 확실히 보장 */
     div[data-testid="stHorizontalBlock"] > div:first-child {
-        min-width: 95px !important;
+        min-width: 85px !important;
     }
     
-    /* 모바일 가독성을 위한 반응형 조정 */
+    /* 가변형 폰트 및 모바일 최적화 조정 */
     @media (max-width: 768px) {
         .main .block-container {
-            padding-left: 10px !important;
-            padding-right: 10px !important;
+            padding-left: 8px !important;
+            padding-right: 8px !important;
         }
-        /* 모바일 팝업 버튼 텍스트 크기 미세 조정 */
+        /* 폰트 크기를 화면 너비에 따라 가변적으로 축소 (clamp 사용) */
         div[data-testid="stPopover"] > button {
-            font-size: 0.7rem !important;
+            font-size: clamp(0.6rem, 2.5vw, 0.8rem) !important;
             padding: 4px 2px !important;
+            min-height: auto !important;
+            height: 2.2rem !important;
         }
+        h1 { font-size: clamp(1.5rem, 5vw, 2.2rem) !important; }
+        h3 { font-size: clamp(0.9rem, 3vw, 1.2rem) !important; }
     }
     
     /* 카드 공통 스타일 (이미지 1 참조) - 패딩 축소 */
@@ -388,22 +390,22 @@ def main():
             card_class = "saju-card selected" if is_selected else "saju-card"
             st.markdown(f"""
                 <div class='{card_class}'>
-                    <div style='font-size:0.7rem; color:#9ca3af; margin-bottom:2px;'>{header}</div>
-                    <div style='font-size:1.8rem; font-weight:700; color:#1f2937; margin-bottom:8px; line-height:1.2;'>{ganzhi}</div>
-                    <div style='border-top: 1px solid #f3f4f6; margin: 5px 0; padding-top: 5px;'>
+                    <div style='font-size: clamp(0.6rem, 2vw, 0.7rem); color:#9ca3af; margin-bottom:2px;'>{header}</div>
+                    <div style='font-size: clamp(1.2rem, 4.5vw, 1.8rem); font-weight:700; color:#1f2937; margin-bottom:6px; line-height:1.2;'>{ganzhi}</div>
+                    <div style='border-top: 1px solid #f3f4f6; margin: 4px 0; padding-top: 4px;'>
                         <div style='display:flex; justify-content:space-between; align-items:center;'>
                             <div style='text-align:left;'>
-                                <div style='font-size:0.6rem; color:#9ca3af;'>십성</div>
-                                <div style='font-size:0.75rem; color:#dc2626; font-weight:600;'>{stem_tg} | {branch_tg}</div>
+                                <div style='font-size: clamp(0.5rem, 1.8vw, 0.6rem); color:#9ca3af;'>십성</div>
+                                <div style='font-size: clamp(0.6rem, 2.2vw, 0.75rem); color:#dc2626; font-weight:600;'>{stem_tg} | {branch_tg}</div>
                             </div>
                             <div style='text-align:right;'>
-                                <div style='font-size:0.6rem; color:#9ca3af;'>운성</div>
-                                <div style='font-size:0.75rem; color:#2563eb; font-weight:600;'>{growth}</div>
+                                <div style='font-size: clamp(0.5rem, 1.8vw, 0.6rem); color:#9ca3af;'>운성</div>
+                                <div style='font-size: clamp(0.6rem, 2.2vw, 0.75rem); color:#2563eb; font-weight:600;'>{growth}</div>
                             </div>
                         </div>
                     </div>
-                    <div style='font-size:0.65rem; color:#f59e0b; margin-top:4px;'>✨ {sinsal}</div>
-                    <div style='font-size:0.65rem; color:#8b5cf6; margin-top:2px;'>🔗 {relations}</div>
+                    <div style='font-size: clamp(0.55rem, 2vw, 0.65rem); color:#f59e0b; margin-top:2px;'>✨ {sinsal}</div>
+                    <div style='font-size: clamp(0.55rem, 2vw, 0.65rem); color:#8b5cf6; margin-top:1px;'>🔗 {relations}</div>
                 </div>
             """, unsafe_allow_html=True)
 
@@ -414,14 +416,14 @@ def main():
             
             # 테이블 헤더
             cols = st.columns([1.5] + [1] * len(column_headers))
-            cols[0].markdown(f"<div style='background:#f1f3f5; border-radius:8px; padding:12px; text-align:center; font-weight:bold; font-size:0.85rem; color:#4b5563;'>분석 항목</div>", unsafe_allow_html=True)
+            cols[0].markdown(f"<div style='background:#f1f3f5; border-radius:8px; padding:8px 4px; text-align:center; font-weight:bold; font-size:clamp(0.65rem, 2.2vw, 0.85rem); color:#4b5563;'>분석 항목</div>", unsafe_allow_html=True)
             for i, header in enumerate(column_headers):
-                cols[i+1].markdown(f"<div style='background:#f1f3f5; border-radius:8px; padding:12px; text-align:center; font-weight:bold; font-size:0.85rem; color:#4b5563;'>{header}</div>", unsafe_allow_html=True)
+                cols[i+1].markdown(f"<div style='background:#f1f3f5; border-radius:8px; padding:8px 4px; text-align:center; font-weight:bold; font-size:clamp(0.65rem, 2.2vw, 0.85rem); color:#4b5563;'>{header}</div>", unsafe_allow_html=True)
             
             # 데이터 행
             for row_idx, label in enumerate(row_labels):
                 cols = st.columns([1.5] + [1] * len(column_headers))
-                cols[0].markdown(f"<div style='background:#f8f9fa; border-radius:8px; padding:14px 10px; font-weight:bold; font-size:0.8rem; height:100%; display:flex; align-items:center; color:#6b7280;'>{label}</div>", unsafe_allow_html=True)
+                cols[0].markdown(f"<div style='background:#f8f9fa; border-radius:8px; padding:10px 6px; font-weight:bold; font-size:clamp(0.6rem, 2vw, 0.8rem); height:100%; display:flex; align-items:center; color:#6b7280;'>{label}</div>", unsafe_allow_html=True)
                 for col_idx, value in enumerate(data_grid[row_idx]):
                     with cols[col_idx+1]:
                         # 팝업 내부에 상세 설명 표시 (SAJU_TERMS 연동)
