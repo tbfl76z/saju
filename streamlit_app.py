@@ -31,7 +31,7 @@ st.markdown("""
         color: white !important;
         border-radius: 8px !important;
         border: none !important;
-        font-weight: bold !important;
+        font-weight: 700 !important;
         height: 3rem !important;
         width: 100% !important;
         margin: 5px 0 !important;
@@ -41,7 +41,7 @@ st.markdown("""
         white-space: nowrap !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
-        font-size: 0.9rem !important;
+        font-size: 0.95rem !important;
     }
     div.stButton > button:hover {
         background-color: #bfa02d !important;
@@ -102,22 +102,51 @@ st.markdown("""
         border-left: 5px solid #3498db;
     }
 
-    /* 팝업 스타일 커스텀 */
+    /* 팝업 스타일 커스텀 (이미지 2의 드롭다운 스타일 재현) */
     div[data-testid="stPopover"] > button {
         background-color: #ffffff !important;
-        border: 1px solid #eee !important;
+        border: 1px solid #d1d5db !important;
         border-radius: 8px !important;
-        padding: 8px !important;
+        padding: 8px 12px !important;
         width: 100% !important;
         height: auto !important;
-        color: #333 !important;
-        font-size: 0.75rem !important;
-        box-shadow: none !important;
-        margin: 0 !important;
+        color: #374151 !important;
+        font-size: 0.85rem !important;
+        font-weight: 500 !important;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+        text-align: center !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+    div[data-testid="stPopover"] > button:after {
+        content: " ˅";
+        margin-left: 6px;
+        font-size: 0.7rem;
+        color: #9ca3af;
     }
     div[data-testid="stPopover"] > button:hover {
         border-color: #d4af37 !important;
         background-color: #fffcf0 !important;
+    }
+
+    /* 오행 분포 그리드 최적화 */
+    .element-grid {
+        display: flex;
+        justify-content: space-between;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    /* 성공 메시지 박스 (이미지 1 참조) */
+    .success-box {
+        background-color: #ecfdf5;
+        border: 1px solid #10b981;
+        border-radius: 8px;
+        padding: 12px 15px;
+        color: #065f46;
+        font-size: 0.9rem;
+        margin: 15px 0;
+        text-align: left;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -177,19 +206,21 @@ def main():
     if not os.path.exists("data"):
         os.makedirs("data", exist_ok=True)
         
-    # 제목 및 로고 배치
-    t_col1, t_col2 = st.columns([1, 4])
+    # 제목 및 로고 배치 (이미지 1 참조)
+    t_col1, t_col2, t_col3 = st.columns([1, 3, 1])
     with t_col1:
-        st.write("") # 간격 조절용
-        # 로고 경로를 스크립트 상대 경로로 설정하여 배포 환경 호환성 확보
         logo_path = os.path.join(os.path.dirname(__file__), "logo.png")
         if os.path.exists(logo_path):
             st.image(logo_path, width=80)
         else:
-            st.write("🔮") # 로고 파일이 없을 경우의 예비 아이콘
+            st.write("🔮")
     with t_col2:
-        st.title("Destiny Code")
-    st.markdown("<h3 style='text-align: center; opacity: 0.8;'>Your Life, Written in Code.</h3>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #2c3e50; margin-top: 10px;'>Destiny Code</h1>", unsafe_allow_html=True)
+    with t_col3:
+        # 우측 캐릭터 이미지 (없으면 아이콘으로 대체)
+        st.write("🎎")
+        
+    st.markdown("<h3 style='text-align: center; opacity: 0.8; color: #4b5563; font-weight: 400;'>Your Life, Written in Code.</h3>", unsafe_allow_html=True)
     st.divider()
 
     with st.sidebar:
@@ -197,32 +228,36 @@ def main():
         if not api_key:
             st.error("⚠️ API Key 설정 필요 (Secrets)")
 
-    # 입력 폼
+    # 입력 폼 (이미지 1 스타일)
     with st.container():
-        col1, col2 = st.columns(2)
-        with col1:
+        row1_c1, row1_c2 = st.columns(2)
+        with row1_c1:
             name = st.text_input("이름 (선택)", placeholder="홍길동")
-            st.write("🗓️ 생년월일")
-            b_cols = st.columns([2, 1, 1])
-            with b_cols[0]:
-                b_year = st.number_input("년", min_value=1900, max_value=2100, value=1990)
-            with b_cols[1]:
-                b_month = st.number_input("월", min_value=1, max_value=12, value=1)
-            with b_cols[2]:
-                b_day = st.number_input("일", min_value=1, max_value=31, value=1)
-        with col2:
+        with row1_c2:
             gender = st.radio("성별", ["여", "남"], horizontal=True)
-            st.write("⏰ 태어난 시간")
-            t_col1, t_col2 = st.columns(2)
-            with t_col1:
-                b_hour = st.number_input("시", min_value=0, max_value=23, value=0)
-            with t_col2:
-                b_minute = st.number_input("분", min_value=0, max_value=59, value=0)
+        
+        st.markdown("<div style='display:flex; align-items:center; gap:5px; margin-top:10px;'>📅 <b>생년월일</b></div>", unsafe_allow_html=True)
+        b_cols = st.columns([1.5, 1, 1])
+        with b_cols[0]:
+            b_year = st.number_input("년", min_value=1900, max_value=2100, value=1990, label_visibility="visible")
+        with b_cols[1]:
+            b_month = st.number_input("월", min_value=1, max_value=12, value=1)
+        with b_cols[2]:
+            b_day = st.number_input("일", min_value=1, max_value=31, value=1)
             
-        col3, col4 = st.columns(2)
-        with col3:
+        st.markdown("<div style='display:flex; align-items:center; gap:5px; margin-top:10px;'>⏰ <b>태어난 시간</b></div>", unsafe_allow_html=True)
+        t_cols = st.columns(2)
+        with t_cols[0]:
+            b_hour = st.number_input("시", min_value=0, max_value=23, value=0)
+        with t_cols[1]:
+            b_minute = st.number_input("분", min_value=0, max_value=59, value=0)
+            
+        row4_c1, row4_c2 = st.columns(2)
+        with row4_c1:
             calendar_type = st.selectbox("달력 선택", ["양력", "음력"])
-        with col4:
+        with row4_c2:
+            st.write("") # 간격 조절
+            st.write("")
             is_leap = st.checkbox("음력 윤달 여부", value=False)
 
     if st.button("사주 명식 계산하기"):
@@ -271,7 +306,7 @@ def main():
             
             # 데이터 버전 관리용 플래그
             st.session_state['data_version'] = "v3"
-            st.success("사주 명식이 정확하게 계산되었습니다.")
+            st.markdown("<div class='success-box'>✅ 사주 명식이 정확하게 계산되었습니다.</div>", unsafe_allow_html=True)
         except Exception as e:
             st.error(f"계산 중 오류 발생: {str(e)}")
 
@@ -329,40 +364,49 @@ def main():
         # --- UI 컴포넌트 유틸리티 ---
         
         def render_saju_card(header, ganzhi, stem_tg, branch_tg, growth, sinsal, relations, is_selected=False):
-            """이미지 1 스타일의 사주 카드 렌더링"""
+            """이미지 4-6 스타일의 고밀도 카드"""
             card_class = "saju-card selected" if is_selected else "saju-card"
             st.markdown(f"""
                 <div class='{card_class}'>
-                    <div style='font-size:0.85rem; font-weight:bold; color:#666; margin-bottom:5px;'>{header}</div>
-                    <div style='font-size:2.2rem; font-weight:bold; color:#2c3e50; margin:10px 0;'>{ganzhi}</div>
-                    <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px solid #eee; padding-top: 10px;'>
-                        <div><div style='font-size:0.7rem; color:#999;'>십성</div><div style='font-size:0.95rem; color:#d32f2f; font-weight:500;'>{stem_tg} | {branch_tg}</div></div>
-                        <div><div style='font-size:0.7rem; color:#999;'>운성</div><div style='font-size:0.9rem; color:#1976d2; font-weight:500;'>{growth}</div></div>
+                    <div style='font-size:0.7rem; color:#9ca3af; margin-bottom:2px;'>{header}</div>
+                    <div style='font-size:1.8rem; font-weight:700; color:#1f2937; margin-bottom:8px; line-height:1.2;'>{ganzhi}</div>
+                    <div style='border-top: 1px solid #f3f4f6; margin: 5px 0; padding-top: 5px;'>
+                        <div style='display:flex; justify-content:space-between; align-items:center;'>
+                            <div style='text-align:left;'>
+                                <div style='font-size:0.6rem; color:#9ca3af;'>십성</div>
+                                <div style='font-size:0.75rem; color:#dc2626; font-weight:600;'>{stem_tg} | {branch_tg}</div>
+                            </div>
+                            <div style='text-align:right;'>
+                                <div style='font-size:0.6rem; color:#9ca3af;'>운성</div>
+                                <div style='font-size:0.75rem; color:#2563eb; font-weight:600;'>{growth}</div>
+                            </div>
+                        </div>
                     </div>
-                    <div style='font-size:0.8rem; color:#e67e22; margin-top:10px;'>✨ {sinsal}</div>
-                    <div style='font-size:0.75rem; color:#9b59b6;'>🔗 {relations}</div>
+                    <div style='font-size:0.65rem; color:#f59e0b; margin-top:4px;'>✨ {sinsal}</div>
+                    <div style='font-size:0.65rem; color:#8b5cf6; margin-top:2px;'>🔗 {relations}</div>
                 </div>
             """, unsafe_allow_html=True)
 
         def render_analysis_table(title, instruction, row_labels, column_headers, data_grid):
             """이미지 2 스타일의 상세 분석 테이블 (팝업 연동)"""
-            st.markdown(f"### 🔍 {title}")
+            st.markdown(f"### 🔍 {title} 🔗")
             st.markdown(f"<div class='analysis-summary-box'>{instruction}</div>", unsafe_allow_html=True)
             
             # 테이블 헤더
             cols = st.columns([1.5] + [1] * len(column_headers))
-            cols[0].markdown(f"<div style='background:#f1f3f5; border-radius:8px; padding:8px; text-align:center; font-weight:bold; font-size:0.8rem;'>분석 항목</div>", unsafe_allow_html=True)
+            cols[0].markdown(f"<div style='background:#f1f3f5; border-radius:8px; padding:12px; text-align:center; font-weight:bold; font-size:0.85rem; color:#4b5563;'>분석 항목</div>", unsafe_allow_html=True)
             for i, header in enumerate(column_headers):
-                cols[i+1].markdown(f"<div style='background:#f1f3f5; border-radius:8px; padding:8px; text-align:center; font-weight:bold; font-size:0.8rem;'>{header}</div>", unsafe_allow_html=True)
+                cols[i+1].markdown(f"<div style='background:#f1f3f5; border-radius:8px; padding:12px; text-align:center; font-weight:bold; font-size:0.85rem; color:#4b5563;'>{header}</div>", unsafe_allow_html=True)
             
             # 데이터 행
             for row_idx, label in enumerate(row_labels):
                 cols = st.columns([1.5] + [1] * len(column_headers))
-                cols[0].markdown(f"<div style='background:#f8f9fa; border-radius:8px; padding:10px; font-weight:bold; font-size:0.8rem; height:100%; display:flex; align-items:center;'>{label}</div>", unsafe_allow_html=True)
+                cols[0].markdown(f"<div style='background:#f8f9fa; border-radius:8px; padding:14px 10px; font-weight:bold; font-size:0.8rem; height:100%; display:flex; align-items:center; color:#6b7280;'>{label}</div>", unsafe_allow_html=True)
                 for col_idx, value in enumerate(data_grid[row_idx]):
                     with cols[col_idx+1]:
                         # 팝업 내부에 상세 설명 표시 (SAJU_TERMS 연동)
                         clean_val = value.replace(" ˅", "").strip()
+                        # ' ˅'는 CSS after로 추가되므로 원본 텍스트만 표시
                         with st.popover(value if value != "-" else " - ", use_container_width=True):
                             desc = SAJU_TERMS.get(clean_val, "상세 정보가 준비 중입니다.")
                             st.markdown(f"**{clean_val}**")
@@ -373,7 +417,6 @@ def main():
         p_headers = ["시주(時)", "일주(日)", "월주(月)", "연주(년)"]
         p_row_labels = ["천간(Stem)", "지지(Branch)", "해당 기둥 십성", "기둥별 12운성"]
         
-        # 십성은 천간/지지 합쳐서 표시하거나 각각 구분
         p_grid = [
             [pillars[k]['stem'] for k in p_keys],
             [pillars[k]['branch'] for k in p_keys],
@@ -395,15 +438,19 @@ def main():
             if data.get('relations'):
                 st.info(f"💡 **지지 관계:** {', '.join(data['relations'])}")
         
-        # 오행 분포 시각화 고도화
+        # 오행 분포 시각화 (이미지 3 스타일)
         elems = data['five_elements']
-        st.subheader("☯️ 오행의 기운 분포")
+        st.markdown("<h3 style='display:flex; align-items:center; gap:8px;'>🔮 오행의 기운 분포</h3>", unsafe_allow_html=True)
         
         o_cols = st.columns(5)
-        for idx, (el, val) in enumerate(elems.items()):
-            o_cols[idx].metric(el, f"{val}개")
-            progress_val = min(val / 8, 1.0)
-            o_cols[idx].progress(progress_val)
+        labels = ["목", "화", "토", "금", "수"]
+        for idx, lbl in enumerate(labels):
+            val = elems.get(lbl, 0)
+            with o_cols[idx]:
+                st.markdown(f"<div style='font-size:0.8rem; color:#6b7280;'>{lbl}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='font-size:1.8rem; font-weight:400; color:#1f2937;'>{val}개</div>", unsafe_allow_html=True)
+                progress_val = min(val / 8, 1.0)
+                st.progress(progress_val)
 
         # --- 대운 리스트 (이미지 1 스타일, 5열 그리드 강제) ---
         daeun_info = data['fortune']
@@ -645,34 +692,34 @@ def main():
             # 선택된 연도 세운 정보 찾기
             cur_seyun = next((s for s in seyun_list if s['year'] == sel_year), seyun_list[0] if seyun_list else {})
             
-            st.markdown('<div class="wolun-grid">', unsafe_allow_html=True)
-            w_cols = st.columns(4)
-            for m in range(1, 13):
-                wolun = get_wolun_data(pillars.get('day', {}).get('stem', '甲'), 
-                                     pillars.get('year', {}).get('branch', '子'), 
-                                     cur_seyun.get('ganzhi', '甲子'), m, 
-                                     pillars=pillars, 
-                                     day_branch=pillars.get('day', {}).get('branch', '丑'))
-                
-                selected_month = st.session_state.get('selected_wolun_month', datetime.datetime.now().month)
-                is_sel_month = selected_month == m
-                card_class = "saju-card selected" if is_sel_month else "saju-card"
-                
-                with w_cols[(m-1) % 4]:
-                    render_saju_card(
-                        f"{m}월",
-                        wolun.get('ganzhi', '-'),
-                        wolun.get('stem_ten_god', '-'),
-                        wolun.get('branch_ten_god', '-'),
-                        wolun.get('twelve_growth', '-'),
-                        f"✨ 신살: {wolun.get('sinsal', '-')}",
-                        "-",
-                        is_sel_month
-                    )
-                    if st.button(f"{m}월 선택", key=f"btn_month_{m}", use_container_width=True):
-                        st.session_state['selected_wolun_month'] = m
-                        st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
+            # 월운(Wolun) 시각화 - 5열 그리드로 통일 (이미지 4, 6 스타일 계승)
+            for i in range(1, 13, 5):
+                w_cols = st.columns(5)
+                chunk = list(range(i, min(i+5, 13)))
+                for idx, m in enumerate(chunk):
+                    wolun = get_wolun_data(pillars.get('day', {}).get('stem', '甲'), 
+                                         pillars.get('year', {}).get('branch', '子'), 
+                                         cur_seyun.get('ganzhi', '甲子'), m, 
+                                         pillars=pillars, 
+                                         day_branch=pillars.get('day', {}).get('branch', '丑'))
+                    
+                    selected_month = st.session_state.get('selected_wolun_month', datetime.datetime.now().month)
+                    is_sel_month = selected_month == m
+                    
+                    with w_cols[idx]:
+                        render_saju_card(
+                            f"{m}월",
+                            wolun.get('ganzhi', '-'),
+                            wolun.get('stem_ten_god', '-'),
+                            wolun.get('branch_ten_god', '-'),
+                            wolun.get('twelve_growth', '-'),
+                            f"✨ {wolun.get('sinsal', '-')}",
+                            "-",
+                            is_sel_month
+                        )
+                        if st.button(f"{m}월 선택", key=f"btn_month_{m}", use_container_width=True):
+                            st.session_state['selected_wolun_month'] = m
+                            st.rerun()
 
         # --- 월운 상세 상호작용 분석 섹션 (NEW) ---
         sel_month = st.session_state.get('selected_wolun_month')
