@@ -49,9 +49,8 @@ st.markdown("""
         transform: translateY(-2px);
     }
     
-    /* 메인 컨테이너 너비 제한 및 중앙 정렬 (641px 기준 고정) */
+    /* 메인 컨테이너 (너비 제한 제거, 중앙 정렬은 유지) */
     .main .block-container {
-        max-width: 641px !important;
         padding-top: 2rem !important;
         margin: 0 auto !important;
     }
@@ -78,7 +77,8 @@ st.markdown("""
         min-width: 95px !important;
     }
     
-    @media (max-width: 641px) {
+    /* 모바일 가독성을 위한 반응형 조정 */
+    @media (max-width: 768px) {
         .main .block-container {
             padding-left: 10px !important;
             padding-right: 10px !important;
