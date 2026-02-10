@@ -49,12 +49,24 @@ st.markdown("""
         transform: translateY(-2px);
     }
     
-    /* 모바일 그리드 강제 */
-    @media (max-width: 768px) {
-        div[data-testid="stHorizontalBlock"] {
-            flex-direction: row !important;
-            flex-wrap: wrap !important;
-            gap: 5px !important;
+    /* 메인 컨테이너 너비 제한 및 중앙 정렬 (641px 기준 고정) */
+    .main .block-container {
+        max-width: 641px !important;
+        padding-top: 2rem !important;
+        margin: 0 auto !important;
+    }
+    
+    /* 모바일 그리드 강제 (641px 이하 및 전체 고정 기준 적용) */
+    div[data-testid="stHorizontalBlock"] {
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        gap: 5px !important;
+    }
+    
+    @media (max-width: 641px) {
+        .main .block-container {
+            padding-left: 10px !important;
+            padding-right: 10px !important;
         }
     }
     
