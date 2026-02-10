@@ -332,49 +332,41 @@ def main():
         
         from saju_data import SAJU_TERMS
 
+        def get_term_desc(item):
+            """용어 사전에서 설명을 찾아 반환 (한자, 본인 등 예외 처리)"""
+            if not item or item == '-': return None
+            
+            # '인' -> '본인' 변환 및 '천간/지지' 접두어 제거
+            lookup_key = item if item != '인' else '본인'
+            clean_item = lookup_key.replace("천간", "").replace("지지", "")
+            
+            # 1. 원본 또는 정제된 키로 검색
+            desc = SAJU_TERMS.get(lookup_key) or SAJU_TERMS.get(clean_item)
+            if desc: return desc
+            
+            # 2. 2글자 간지(예: '甲子')인 경우 각각 분리해서 검색
+            if len(item) == 2:
+                stem_desc = SAJU_TERMS.get(item[0])
+                branch_desc = SAJU_TERMS.get(item[1])
+                if stem_desc and branch_desc:
+                    return f"**{item[0]}**: {stem_desc}\n\n**{item[1]}**: {branch_desc}"
+                elif stem_desc: return stem_desc
+                elif branch_desc: return branch_desc
+            
+            return "상세 정보가 곧 업데이트될 예정입니다."
+
         def term_popover(label, value, key_suffix):
-            # 신살이나 관계의 경우 ','로 구분된 여러 개일 수 있음
             if not value or value == '-':
                 st.write("-")
                 return
                 
-            items = [v.strip() for v in value.split(',')]
-            
             with st.popover(value, use_container_width=True):
-                for item in items:
-                    lookup_key = item
-                    if item == '인': lookup_key = '본인'
-                    
-                    # '천간합', '지지충' 등 접두어가 붙은 경우 원본 단어 추출
-                    clean_item = item.replace("천간", "").replace("지지", "")
-                    lookup_key = clean_item if clean_item in SAJU_TERMS else lookup_key
-                    if clean_item == '인': lookup_key = '본인'
-                    
-                    # 1. 먼저 단어로 검색
-                    desc = SAJU_TERMS.get(lookup_key)
-                    
-                    if desc:
-                        st.markdown(f"**{item}**")
-                        st.caption(desc)
-                    elif len(item) == 2:
-                        # 2. 2글자 간지(예: '갑자')인 경우 각각 분리해서 검색
-                        stem, branch = item[0], item[1]
-                        stem_desc = SAJU_TERMS.get(stem)
-                        branch_desc = SAJU_TERMS.get(branch)
-                        
-                        if stem_desc or branch_desc:
-                            st.markdown(f"**{item} ({stem}+{branch})**")
-                            if stem_desc: st.caption(f"**{stem}**: {stem_desc}")
-                            if branch_desc: st.caption(f"**{branch}**: {branch_desc}")
-                        else:
-                            st.markdown(f"**{item}**")
-                            st.caption("상세 정보가 구축 중입니다.")
-                    else:
-                        st.markdown(f"**{item}**")
-                        st.caption("상세 정보가 구축 중입니다.")
-                        
-                    if len(items) > 1:
-                        st.divider()
+                items = [v.strip() for v in value.replace("|", ",").split(",")]
+                for i, item in enumerate(items):
+                    desc = get_term_desc(item)
+                    st.markdown(f"**{item}**")
+                    st.caption(desc)
+                    if i < len(items) - 1: st.divider()
 
         # --- UI 컴포넌트 유틸리티 ---
         
@@ -421,9 +413,12 @@ def main():
                     with cols[col_idx+1]:
                         clean_val = value.replace(" ˅", "").strip()
                         with st.popover(value if value != "-" else " - ", use_container_width=True):
-                            desc = SAJU_TERMS.get(clean_val, "상세 정보가 준비 중입니다.")
-                            st.markdown(f"**{clean_val}**")
-                            st.caption(desc)
+                            items = [v.strip() for v in clean_val.replace("|", ",").split(",")]
+                            for i, item in enumerate(items):
+                                desc = get_term_desc(item)
+                                st.markdown(f"**{item}**")
+                                st.caption(desc)
+                                if i < len(items) - 1: st.divider()
 
         # --- 사주 4주 명식 (이미지 2 스타일로 통합) ---
         p_keys = ['hour', 'day', 'month', 'year']
