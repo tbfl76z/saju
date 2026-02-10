@@ -322,43 +322,9 @@ def main():
 
         # 4주 명식 고정 레이아웃 (HTML Table로 변경하여 그리드 꼬임 방지)
         def get_pill_html_table(top_label, main_text, sub_label, color="#2c3e50", sub_color="#666"):
-            return f"""
-            <td style="padding: 4px; width: 22%;">
-                <div style="background: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 10px 5px; text-align: center; box-shadow: 2px 2px 5px rgba(0,0,0,0.03);">
-                    <div style="font-size: 0.7rem; color: #d4af37; margin-bottom: 3px; font-weight: bold;">{top_label}</div>
-                    <div style="font-size: 1.6rem; font-weight: bold; color: {color}; margin: 2px 0;">{main_text}</div>
-                    <div style="font-size: 0.8rem; color: {sub_color}; margin-top: 3px; font-weight: 500;">{sub_label}</div>
-                </div>
-            </td>
-            """
+            return f'<td style="padding: 4px; width: 22%;"><div style="background: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 10px 5px; text-align: center; box-shadow: 2px 2px 5px rgba(0,0,0,0.03);"><div style="font-size: 0.7rem; color: #d4af37; margin-bottom: 3px; font-weight: bold;">{top_label}</div><div style="font-size: 1.6rem; font-weight: bold; color: {color}; margin: 2px 0;">{main_text}</div><div style="font-size: 0.8rem; color: {sub_color}; margin-top: 3px; font-weight: 500;">{sub_label}</div></div></td>'
 
-        st.markdown(f"""
-        <table style="width: 100%; border-collapse: separate; border-spacing: 4px; table-layout: fixed; margin-bottom: 10px;">
-            <tr>
-                <td style="width: 15%; background: #f8f9fa; border-radius: 8px; text-align: center; font-weight: bold; color: #666; font-size: 0.8rem;">천간</td>
-                {get_pill_html_table(data['ten_gods']['hour'], pillars['hour']['stem'], '시주')}
-                {get_pill_html_table(data['ten_gods']['day'], pillars['day']['stem'], '일주', color='#d32f2f')}
-                {get_pill_html_table(data['ten_gods']['month'], pillars['month']['stem'], '월주')}
-                {get_pill_html_table(data['ten_gods']['year'], pillars['year']['stem'], '연주')}
-            </tr>
-            <tr style="height: 4px;"></tr>
-            <tr>
-                <td style="width: 15%; background: #f8f9fa; border-radius: 8px; text-align: center; font-weight: bold; color: #666; font-size: 0.8rem;">지지</td>
-                {get_pill_html_table('시지', pillars['hour']['branch'], data['jiji_ten_gods']['hour'], sub_color="#d63384")}
-                {get_pill_html_table('일지', pillars['day']['branch'], data['jiji_ten_gods']['day'], sub_color="#d63384")}
-                {get_pill_html_table('월지', pillars['month']['branch'], data['jiji_ten_gods']['month'], sub_color="#d63384")}
-                {get_pill_html_table('연지', pillars['year']['branch'], data['jiji_ten_gods']['year'], sub_color="#d63384")}
-            </tr>
-            <tr style="height: 4px;"></tr>
-            <tr>
-                <td style="width: 15%; background: #f8f9fa; border-radius: 8px; text-align: center; font-weight: bold; color: #666; font-size: 0.8rem;">운성</td>
-                {get_pill_html_table('시주', data['twelve_growth']['hour'], '12운성', color="#1976d2", sub_color="#1976d2")}
-                {get_pill_html_table('일주', data['twelve_growth']['day'], '12운성', color="#1976d2", sub_color="#1976d2")}
-                {get_pill_html_table('월주', data['twelve_growth']['month'], '12운성', color="#1976d2", sub_color="#1976d2")}
-                {get_pill_html_table('연주', data['twelve_growth']['year'], '12운성', color="#1976d2", sub_color="#1976d2")}
-            </tr>
-        </table>
-        """, unsafe_allow_html=True)
+        st.markdown(f"""<table style="width: 100%; border-collapse: separate; border-spacing: 4px; table-layout: fixed; margin-bottom: 10px;"><tr><td style="width: 15%; background: #f8f9fa; border-radius: 8px; text-align: center; font-weight: bold; color: #666; font-size: 0.8rem;">천간</td>{get_pill_html_table(data['ten_gods']['hour'], pillars['hour']['stem'], '시주')}{get_pill_html_table(data['ten_gods']['day'], pillars['day']['stem'], '일주', color='#d32f2f')}{get_pill_html_table(data['ten_gods']['month'], pillars['month']['stem'], '월주')}{get_pill_html_table(data['ten_gods']['year'], pillars['year']['stem'], '연주')}</tr><tr style="height: 4px;"></tr><tr><td style="width: 15%; background: #f8f9fa; border-radius: 8px; text-align: center; font-weight: bold; color: #666; font-size: 0.8rem;">지지</td>{get_pill_html_table('시지', pillars['hour']['branch'], data['jiji_ten_gods']['hour'], sub_color="#d63384")}{get_pill_html_table('일지', pillars['day']['branch'], data['jiji_ten_gods']['day'], sub_color="#d63384")}{get_pill_html_table('월지', pillars['month']['branch'], data['jiji_ten_gods']['month'], sub_color="#d63384")}{get_pill_html_table('연지', pillars['year']['branch'], data['jiji_ten_gods']['year'], sub_color="#d63384")}</tr><tr style="height: 4px;"></tr><tr><td style="width: 15%; background: #f8f9fa; border-radius: 8px; text-align: center; font-weight: bold; color: #666; font-size: 0.8rem;">운성</td>{get_pill_html_table('시주', data['twelve_growth']['hour'], '12운성', color="#1976d2", sub_color="#1976d2")}{get_pill_html_table('일주', data['twelve_growth']['day'], '12운성', color="#1976d2", sub_color="#1976d2")}{get_pill_html_table('월주', data['twelve_growth']['month'], '12운성', color="#1976d2", sub_color="#1976d2")}{get_pill_html_table('연주', data['twelve_growth']['year'], '12운성', color="#1976d2", sub_color="#1976d2")}</tr></table>""", unsafe_allow_html=True)
         
         # 공망 및 지지 관계 표시
         col_g1, col_g2 = st.columns(2)
@@ -398,24 +364,7 @@ def main():
                 st.rerun()
                 
             # 카드형 가독성 개선 (이미지 스타일 준수)
-            st.markdown(f"""
-            <div style='border:{border_css}; padding:15px; border-radius:12px; text-align:center; background-color:{bg_css}; margin-bottom:15px; box-shadow: 0 2px 6px rgba(0,0,0,0.04);'>
-                <div style='font-size:0.9rem; font-weight:bold; color:#f39c12; margin-bottom:5px;'>{age_val}세~</div>
-                <div style='font-size:1.8rem; font-weight:bold; color:#2c3e50; margin:5px 0;'>{item.get('ganzhi', '-')}</div>
-                <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;'>
-                    <div>
-                        <div style='font-size:0.7rem; color:#888;'>십성</div>
-                        <div style='font-size:0.9rem; color:#d32f2f; font-weight:500;'>{item.get('stem_ten_god', '-')} | {item.get('branch_ten_god', '-')}</div>
-                    </div>
-                    <div>
-                        <div style='font-size:0.7rem; color:#888;'>운성</div>
-                        <div style='font-size:0.9rem; color:#1976d2; font-weight:500;'>{item.get('twelve_growth', '-')}</div>
-                    </div>
-                </div>
-                <div style='font-size:0.8rem; color:#e67e22; margin-top:8px; font-weight:500;'>✨ 신살: {item.get('sinsal', '-')}</div>
-                <div style='font-size:0.75rem; color:#9b59b6; margin-top:4px; font-weight:500;'>🔗 관계: {item.get('relations', '-')}</div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(f"""<div style='border:{border_css}; padding:15px; border-radius:12px; text-align:center; background-color:{bg_css}; margin-bottom:15px; box-shadow: 0 2px 6px rgba(0,0,0,0.04);'><div style='font-size:0.9rem; font-weight:bold; color:#f39c12; margin-bottom:5px;'>{age_val}세~</div><div style='font-size:1.8rem; font-weight:bold; color:#2c3e50; margin:5px 0;'>{item.get('ganzhi', '-')}</div><div style='display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;'><div><div style='font-size:0.7rem; color:#888;'>십성</div><div style='font-size:0.9rem; color:#d32f2f; font-weight:500;'>{item.get('stem_ten_god', '-')} | {item.get('branch_ten_god', '-')}</div></div><div><div style='font-size:0.7rem; color:#888;'>운성</div><div style='font-size:0.9rem; color:#1976d2; font-weight:500;'>{item.get('twelve_growth', '-')}</div></div></div><div style='font-size:0.8rem; color:#e67e22; margin-top:8px; font-weight:500;'>✨ 신살: {item.get('sinsal', '-')}</div><div style='font-size:0.75rem; color:#9b59b6; margin-top:4px; font-weight:500;'>🔗 관계: {item.get('relations', '-')}</div></div>""", unsafe_allow_html=True)
 
         # --- 대운 상세 상호작용 분석 섹션 (NEW) ---
         if 'selected_daeun_age' in st.session_state:
