@@ -56,31 +56,46 @@ st.markdown("""
         margin: 0 auto !important;
     }
     
-    /* 모바일 그리드 강제 (641px 이하 및 전체 고정 기준 적용) */
+    /* 모바일 강제 세로 쌓임 방지 (이미지 1의 문제를 해결하기 위한 강력한 가로 레이아웃 고정) */
     div[data-testid="stHorizontalBlock"] {
         flex-direction: row !important;
-        flex-wrap: wrap !important;
-        gap: 5px !important;
+        flex-wrap: nowrap !important;
+        align-items: stretch !important;
+        width: 100% !important;
+    }
+    div[data-testid="column"] {
+        flex: 1 1 0% !important;
+        min-width: 0 !important;
+        width: auto !important;
+    }
+    /* 테이블 행의 첫 번째 레이블 열 너비 확보 (ratios [1.5, 1, ...]) */
+    div[data-testid="stHorizontalBlock"] > div:first-child {
+        flex: 1.5 1 0% !important;
     }
     
     @media (max-width: 641px) {
         .main .block-container {
-            padding-left: 10px !important;
-            padding-right: 10px !important;
+            padding-left: 5px !important;
+            padding-right: 5px !important;
+        }
+        /* 모바일에서 텍스트 크기 미세 조정으로 가로 공간 확보 */
+        div[data-testid="stPopover"] > button {
+            font-size: 0.75rem !important;
+            padding: 6px 4px !important;
         }
     }
     
-    /* 카드 공통 스타일 (이미지 1 참조) */
+    /* 카드 공통 스타일 (이미지 1 참조) - 패딩 축소 */
     .saju-card {
         border: 1px solid #e0e0e0;
         border-radius: 12px;
-        padding: 15px 10px;
+        padding: 10px 5px; /* 패딩 축소 */
         text-align: center;
         background-color: white;
         box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         margin-bottom: 5px;
         transition: all 0.2s ease;
-        min-height: 200px;
+        min-height: 180px; /* 높이 약간 조절 */
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -142,10 +157,10 @@ st.markdown("""
         background-color: #ecfdf5;
         border: 1px solid #10b981;
         border-radius: 8px;
-        padding: 12px 15px;
+        padding: 10px 12px; /* 패딩 축소 */
         color: #065f46;
-        font-size: 0.9rem;
-        margin: 15px 0;
+        font-size: 0.85rem; /* 글자 크기 축소 */
+        margin: 10px 0;
         text-align: left;
     }
 </style>
