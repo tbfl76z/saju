@@ -58,64 +58,55 @@ st.markdown("""
         }
     }
     
-    /* 카드 공통 스타일 */
+    /* 카드 공통 스타일 (이미지 1 참조) */
     .saju-card {
         border: 1px solid #e0e0e0;
         border-radius: 12px;
-        padding: 12px 8px;
+        padding: 15px 10px;
         text-align: center;
         background-color: white;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        margin-bottom: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        margin-bottom: 5px;
         transition: all 0.2s ease;
+        min-height: 200px;
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
-    }
-    .saju-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        justify-content: center;
     }
     .saju-card.selected {
         border: 2px solid #d4af37 !important;
         background-color: #fffcf0 !important;
+        box-shadow: 0 6px 15px rgba(212, 175, 55, 0.15) !important;
     }
     
-    .result-container {
-        border: 2px solid #d4af37;
-        padding: 25px;
-        border-radius: 12px;
-        background-color: #ffffff;
-        box-shadow: 0 4px 15px rgba(212, 175, 55, 0.1);
-    }
-    
-    /* 명식표 및 분석 테이블 폰트 최적화 */
-    .saju-table-container { font-family: 'Noto Serif KR', serif; }
-    
-    /* 모바일 환경 최적화 */
-    @media (max-width: 768px) {
-        .saju-card { padding: 8px 4px !important; }
-        .saju-card div { font-size: 0.8rem !important; }
-        .saju-card .ganzhi-text { font-size: 1.4rem !important; }
-    }
-    
-    /* 공유 버튼 스타일 */
-    .share-btn {
-        display: block;
-        width: 100%;
-        padding: 10px;
-        background-color: #2c3e50;
-        color: white !important;
-        text-align: center;
-        text-decoration: none;
+    /* 상세 분석 요약 박스 (이미지 2 참조) */
+    .analysis-summary-box {
+        background-color: #e7f3ff;
         border-radius: 8px;
-        font-weight: bold;
-        margin-top: 10px;
-        cursor: pointer;
-        border: none;
-        font-size: 0.9rem;
+        padding: 15px;
+        margin-bottom: 20px;
+        color: #2c3e50;
+        font-size: 0.95rem;
+        border-left: 5px solid #3498db;
     }
-    .share-btn:hover { background-color: #34495e; }
+
+    /* 팝업 스타일 커스텀 */
+    div[data-testid="stPopover"] > button {
+        background-color: #ffffff !important;
+        border: 1px solid #eee !important;
+        border-radius: 8px !important;
+        padding: 8px !important;
+        width: 100% !important;
+        height: auto !important;
+        color: #333 !important;
+        font-size: 0.75rem !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+    }
+    div[data-testid="stPopover"] > button:hover {
+        border-color: #d4af37 !important;
+        background-color: #fffcf0 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -324,13 +315,104 @@ def main():
                     if len(items) > 1:
                         st.divider()
 
-        # 4주 명식 고정 레이아웃 (HTML Table로 변경하여 그리드 꼬임 방지)
-        def get_pill_html_table(top_label, main_text, sub_label, color="#2c3e50", sub_color="#666"):
-            desc = SAJU_TERMS.get(main_text, "")
-            tooltip = f' title="{desc}"' if desc else ""
-            return f'<td style="padding: 4px; width: 22%;"><div{tooltip} style="background: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 10px 5px; text-align: center; box-shadow: 2px 2px 5px rgba(0,0,0,0.03); cursor: help;"><div style="font-size: 0.7rem; color: #d4af37; margin-bottom: 3px; font-weight: bold;">{top_label}</div><div style="font-size: 1.6rem; font-weight: bold; color: {color}; margin: 2px 0;">{main_text}</div><div style="font-size: 0.8rem; color: {sub_color}; margin-top: 3px; font-weight: 500;">{sub_label}</div></div></td>'
+        # --- UI 컴포넌트 유틸리티 ---
+        
+        def render_saju_card(header, ganzhi, stem_tg, branch_tg, growth, sinsal, relations, is_selected=False):
+            """이미지 1 스타일의 사주 카드 렌더링"""
+            card_class = "saju-card selected" if is_selected else "saju-card"
+            st.markdown(f"""
+                <div class='{card_class}'>
+                    <div style='font-size:0.85rem; font-weight:bold; color:#666; margin-bottom:5px;'>{header}</div>
+                    <div style='font-size:2.2rem; font-weight:bold; color:#2c3e50; margin:10px 0;'>{ganzhi}</div>
+                    <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px solid #eee; padding-top: 10px;'>
+                        <div><div style='font-size:0.7rem; color:#999;'>십성</div><div style='font-size:0.95rem; color:#d32f2f; font-weight:500;'>{stem_tg} | {branch_tg}</div></div>
+                        <div><div style='font-size:0.7rem; color:#999;'>운성</div><div style='font-size:0.9rem; color:#1976d2; font-weight:500;'>{growth}</div></div>
+                    </div>
+                    <div style='font-size:0.8rem; color:#e67e22; margin-top:10px;'>✨ {sinsal}</div>
+                    <div style='font-size:0.75rem; color:#9b59b6;'>🔗 {relations}</div>
+                </div>
+            """, unsafe_allow_html=True)
 
-        st.markdown(f"""<table style="width: 100%; border-collapse: separate; border-spacing: 4px; table-layout: fixed; margin-bottom: 10px;"><tr><td style="width: 15%; background: #f8f9fa; border-radius: 8px; text-align: center; font-weight: bold; color: #666; font-size: 0.8rem;">천간</td>{get_pill_html_table(data['ten_gods']['hour'], pillars['hour']['stem'], '시주')}{get_pill_html_table(data['ten_gods']['day'], pillars['day']['stem'], '일주', color='#d32f2f')}{get_pill_html_table(data['ten_gods']['month'], pillars['month']['stem'], '월주')}{get_pill_html_table(data['ten_gods']['year'], pillars['year']['stem'], '연주')}</tr><tr style="height: 4px;"></tr><tr><td style="width: 15%; background: #f8f9fa; border-radius: 8px; text-align: center; font-weight: bold; color: #666; font-size: 0.8rem;">지지</td>{get_pill_html_table('시지', pillars['hour']['branch'], data['jiji_ten_gods']['hour'], sub_color="#d63384")}{get_pill_html_table('일지', pillars['day']['branch'], data['jiji_ten_gods']['day'], sub_color="#d63384")}{get_pill_html_table('월지', pillars['month']['branch'], data['jiji_ten_gods']['month'], sub_color="#d63384")}{get_pill_html_table('연지', pillars['year']['branch'], data['jiji_ten_gods']['year'], sub_color="#d63384")}</tr><tr style="height: 4px;"></tr><tr><td style="width: 15%; background: #f8f9fa; border-radius: 8px; text-align: center; font-weight: bold; color: #666; font-size: 0.8rem;">운성</td>{get_pill_html_table('시주', data['twelve_growth']['hour'], '12운성', color="#1976d2", sub_color="#1976d2")}{get_pill_html_table('일주', data['twelve_growth']['day'], '12운성', color="#1976d2", sub_color="#1976d2")}{get_pill_html_table('월주', data['twelve_growth']['month'], '12운성', color="#1976d2", sub_color="#1976d2")}{get_pill_html_table('연주', data['twelve_growth']['year'], '12운성', color="#1976d2", sub_color="#1976d2")}</tr></table>""", unsafe_allow_html=True)
+        def render_analysis_table(title, instruction, row_labels, column_headers, data_grid):
+            """이미지 2 스타일의 상세 분석 테이블 (팝업 연동)"""
+            st.markdown(f"### 🔍 {title}")
+            st.markdown(f"<div class='analysis-summary-box'>{instruction}</div>", unsafe_allow_html=True)
+            
+            # 테이블 헤더
+            cols = st.columns([1.5] + [1] * len(column_headers))
+            cols[0].markdown(f"<div style='background:#f1f3f5; border-radius:8px; padding:8px; text-align:center; font-weight:bold; font-size:0.8rem;'>분석 항목</div>", unsafe_allow_html=True)
+            for i, header in enumerate(column_headers):
+                cols[i+1].markdown(f"<div style='background:#f1f3f5; border-radius:8px; padding:8px; text-align:center; font-weight:bold; font-size:0.8rem;'>{header}</div>", unsafe_allow_html=True)
+            
+            # 데이터 행
+            for row_idx, label in enumerate(row_labels):
+                cols = st.columns([1.5] + [1] * len(column_headers))
+                cols[0].markdown(f"<div style='background:#f8f9fa; border-radius:8px; padding:10px; font-weight:bold; font-size:0.8rem; height:100%; display:flex; align-items:center;'>{label}</div>", unsafe_allow_html=True)
+                for col_idx, value in enumerate(data_grid[row_idx]):
+                    with cols[col_idx+1]:
+                        # 팝업 내부에 상세 설명 표시 (SAJU_TERMS 연동)
+                        clean_val = value.replace(" ˅", "").strip()
+                        with st.popover(value if value != "-" else " - ", use_container_width=True):
+                            desc = SAJU_TERMS.get(clean_val, "상세 정보가 준비 중입니다.")
+                            st.markdown(f"**{clean_val}**")
+                            st.caption(desc)
+
+        # --- 사주 4주 명식 (이미지 2 스타일로 구현) ---
+        st.subheader("🔮 사주 4주 명식")
+        
+        # 안내 문구 박스
+        st.markdown("<div class='analysis-summary-box'>당신의 타고난 기운인 사주(4주 8자) 명식입니다. 각 항목을 클릭하여 상세한 풀이를 확인해보세요.</div>", unsafe_allow_html=True)
+        
+        headers = ["시주(時)", "일주(日)", "월주(月)", "연주(년)"]
+        rows = [
+            ("천간", [
+                (data['ten_gods']['hour'], pillars['hour']['stem']),
+                (data['ten_gods']['day'], pillars['day']['stem']),
+                (data['ten_gods']['month'], pillars['month']['stem']),
+                (data['ten_gods']['year'], pillars['year']['stem'])
+            ]),
+            ("지지", [
+                ("시지", pillars['hour']['branch'], data['jiji_ten_gods']['hour']),
+                ("일지", pillars['day']['branch'], data['jiji_ten_gods']['day']),
+                ("월지", pillars['month']['branch'], data['jiji_ten_gods']['month']),
+                ("연지", pillars['year']['branch'], data['jiji_ten_gods']['year'])
+            ]),
+            ("12운성", [
+                ("시주", data['twelve_growth']['hour']),
+                ("일주", data['twelve_growth']['day']),
+                ("월주", data['twelve_growth']['month']),
+                ("연주", data['twelve_growth']['year'])
+            ])
+        ]
+        
+        # 헤더 출력
+        h_cols = st.columns([1.2] + [1] * 4)
+        h_cols[0].markdown("<div style='background:#f1f3f5; border-radius:8px; padding:8px; text-align:center; font-weight:bold; font-size:0.8rem;'>구분</div>", unsafe_allow_html=True)
+        for i, h in enumerate(headers):
+            h_cols[i+1].markdown(f"<div style='background:#f1f3f5; border-radius:8px; padding:8px; text-align:center; font-weight:bold; font-size:0.8rem;'>{h}</div>", unsafe_allow_html=True)
+            
+        # 데이터 행 출력
+        for r_idx, (r_label, r_data) in enumerate(rows):
+            r_cols = st.columns([1.2] + [1] * 4)
+            r_cols[0].markdown(f"<div style='background:#f8f9fa; border-radius:8px; padding:10px; font-weight:bold; font-size:0.8rem; height:100%; display:flex; align-items:center;'>{r_label}</div>", unsafe_allow_html=True)
+            for c_idx, cell_data in enumerate(r_data):
+                with r_cols[c_idx+1]:
+                    if r_label == "천간":
+                        tg, stem = cell_data
+                        label_val = f"{tg}\n{stem}"
+                        lookup_key = stem
+                    elif r_label == "지지":
+                        label, branch, jtg = cell_data
+                        label_val = f"{branch}\n{jtg}"
+                        lookup_key = branch
+                    else: # 12운성
+                        unit, growth = cell_data
+                        label_val = growth
+                        lookup_key = growth
+                        
+                    with st.popover(label_val, use_container_width=True):
+                        st.markdown(f"**{lookup_key}**")
+                        st.caption(SAJU_TERMS.get(lookup_key, "상세 정보가 준비 중입니다."))
         
         # 공망 및 지지 관계 표시
         col_g1, col_g2 = st.columns(2)
@@ -359,19 +441,24 @@ def main():
         for item in data['fortune']['list']:
             age_val = item.get('age', 0)
             is_sel_daeun = st.session_state.get('selected_daeun_age') == age_val
-            border_css = "3px solid #d4af37" if is_sel_daeun else "1px solid #e0e0e0"
-            bg_css = "#fffcf0" if is_sel_daeun else "#ffffff"
             
-            # 버튼 상단 배치 (이미지 4 스타일) - 전역 CSS가 노란색으로 만들어줌
-            if st.button(f"{age_val}세 대운 선택", key=f"btn_daeun_{age_val}"):
+            # 카드 렌더링 (이미지 1 스타일)
+            render_saju_card(
+                f"{age_val}세 대운",
+                item.get('ganzhi', '-'),
+                item.get('stem_ten_god', '-'),
+                item.get('branch_ten_god', '-'),
+                item.get('twelve_growth', '-'),
+                f"신살: {item.get('sinsal', '-')}",
+                f"관계: {item.get('relations', '-')}",
+                is_sel_daeun
+            )
+            
+            if st.button(f"{age_val}세 대운 선택", key=f"btn_daeun_{age_val}", use_container_width=True):
                 st.session_state['selected_daeun_age'] = age_val
                 birth_year = int(data.get('birth_date', '1990-01-01').split('-')[0])
                 st.session_state['selected_seyun_year'] = birth_year + age_val - 1
                 st.rerun()
-                
-            # 카드형 가독성 개선 (이미지 스타일 준수)
-            card_class = "saju-card selected" if is_sel_daeun else "saju-card"
-            st.markdown(f"""<div class='{card_class}' style='padding:15px; min-height:180px;'><div style='font-size:0.9rem; font-weight:bold; color:#f39c12; margin-bottom:5px;'>{age_val}세~</div><div class='ganzhi-text' style='font-size:2.2rem; font-weight:bold; color:#2c3e50; margin:5px 0;'>{item.get('ganzhi', '-')}</div><div style='display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;'><div><div style='font-size:0.7rem; color:#888;'>십성</div><div style='font-size:0.9rem; color:#d32f2f; font-weight:500;'>{item.get('stem_ten_god', '-')} | {item.get('branch_ten_god', '-')}</div></div><div><div style='font-size:0.7rem; color:#888;'>운성</div><div style='font-size:0.9rem; color:#1976d2; font-weight:500;'>{item.get('twelve_growth', '-')}</div></div></div><div style='font-size:0.8rem; color:#e67e22; margin-top:8px; font-weight:500;'>✨ 신살: {item.get('sinsal', '-')}</div><div style='font-size:0.75rem; color:#9b59b6; margin-top:4px; font-weight:500;'>🔗 관계: {item.get('relations', '-')}</div></div>""", unsafe_allow_html=True)
 
         # --- 대운 상세 상호작용 분석 섹션 (NEW) ---
         if 'selected_daeun_age' in st.session_state:
@@ -379,91 +466,22 @@ def main():
             sel_daeun = next((d for d in data['fortune']['list'] if d['age'] == sel_age), None)
             
             if sel_daeun:
-                st.markdown(f"### 🔍 {sel_age}세 대운({sel_daeun['ganzhi']}) 상세 분석")
-                st.info(f"선택하신 대운이 원국의 각 기둥(연,월,일,시)과 맺는 명리적 상호작용을 항목별로 풀이합니다.")
-                
-                # 상세 관계 데이터 재산출 (각 기둥별로 개별 관계 추출)
-                def get_pillar_relation(pillar_key):
-                    p = pillars[pillar_key]
-                    name = {'year':'년', 'month':'월', 'day':'일', 'hour':'시'}[pillar_key]
-                    d_ganzhi = sel_daeun['ganzhi']
-                    if not d_ganzhi or len(d_ganzhi) < 2: return {}
-                    d_stem, d_branch = d_ganzhi[0], d_ganzhi[1]
-                    p_stem, p_branch = p['stem'], p['branch']
-                    
-                    # 십성 (대운 -> 원국 기준)
-                    from saju_utils import GAN_TEN_GODS, BRANCH_HIDDEN_GANS, TWELVE_GROWTH, STEM_RELATIONS, BRANCH_RELATIONS
-                    day_gan = pillars['day']['stem']
-                    
-                    # 관계 산출 (합충형파해 vs 신살 분리)
-                    inter_rels = []
-                    sinsal_rels = []
-                    
-                    if STEM_RELATIONS['충'].get(d_stem) == p_stem: inter_rels.append("천간충(沖)")
-                    if STEM_RELATIONS['합'].get(d_stem) == p_stem: inter_rels.append("천간합(合)")
-                    if BRANCH_RELATIONS['충'].get(d_branch) == p_branch: inter_rels.append("충(沖)")
-                    if BRANCH_RELATIONS['합'].get(d_branch) == p_branch: inter_rels.append("합(合)")
-                    
-                    h_val = BRANCH_RELATIONS['형'].get(d_branch)
-                    if h_val:
-                        if isinstance(h_val, list):
-                            if p_branch in h_val: inter_rels.append("형(刑)")
-                        elif h_val == p_branch: inter_rels.append("형(刑)")
-                    
-                    if BRANCH_RELATIONS['파'].get(d_branch) == p_branch: inter_rels.append("파(破)")
-                    if BRANCH_RELATIONS['해'].get(d_branch) == p_branch: inter_rels.append("해(害)")
-                    
-                    # 원진, 귀문은 신살 영역으로 분류
-                    if BRANCH_RELATIONS['원진'].get(d_branch) == p_branch: sinsal_rels.append("원진(元嗔)")
-                    if BRANCH_RELATIONS['귀문'].get(d_branch) == p_branch: sinsal_rels.append("귀문(鬼門)")
-                    
-                    # 12신살 추가 (년지 기준)
-                    year_branch = pillars['year']['branch']
-                    from saju_utils import get_sinsal_list
-                    twelve_sinsal = get_sinsal_list(year_branch, d_branch)
-                    if twelve_sinsal and twelve_sinsal not in sinsal_rels:
-                        sinsal_rels.append(twelve_sinsal)
-                    
-                    return {
-                        "ganzhi": p['pillar'],
-                        "ten_god": GAN_TEN_GODS.get(day_gan, {}).get(p_stem, '-'),
-                        "growth": TWELVE_GROWTH.get(d_stem, {}).get(p_branch, '-'),
-                        "sinsal": ", ".join(sinsal_rels) if sinsal_rels else "-",
-                        "interaction": ", ".join(inter_rels) if inter_rels else "평온"
-                    }
-
-                # 모바일 최적화 고품격 상세 분석 테이블 (HTML)
-                labels = ["분석 항목", "시주(時)", "일주(日)", "월주(月)", "연주(년)"]
-                p_keys = ['hour', 'day', 'month', 'year']
-                p_data = {k: get_pillar_relation(k) for k in p_keys}
-                
-                row_items = [
-                    ("사주원국 간지", [p_data[k]['ganzhi'] for k in p_keys]),
-                    ("원국 해당 십성", [p_data[k]['ten_god'] for k in p_keys]),
-                    ("대운 적용 운성", [p_data[k]['growth'] for k in p_keys]),
-                    ("적용 신살·귀인", [p_data[k]['sinsal'] for k in p_keys]),
-                    ("상호 관계 분석", [p_data[k]['interaction'] for k in p_keys])
+                # 이미지 2 스타일 상세 분석 테이블 호출
+                row_labels = ["사주원국 간지", "원국 해당 십성", "대운 적용 운성", "적용 신살·귀인", "상호 관계 분석"]
+                column_headers = ["시주(時)", "일주(日)", "월주(月)", "연주(년)"]
+                data_grid = [
+                    [p_data[k]['ganzhi'] for k in p_keys],
+                    [p_data[k]['ten_god'] for k in p_keys],
+                    [p_data[k]['growth'] for k in p_keys],
+                    [p_data[k]['sinsal'] for k in p_keys],
+                    [p_data[k]['interaction'] for k in p_keys]
                 ]
                 
-                table_html = f"""
-                <div style="overflow-x: auto; margin-bottom: 20px;">
-                <table style="width: 100%; border-collapse: separate; border-spacing: 5px; text-align: center; font-size: 0.75rem;">
-                    <tr>
-                        {"".join(f'<th style="background-color: #f1f3f5; border-radius: 8px; padding: 8px; min-width: 60px;">{l}</th>' for l in labels)}
-                    </tr>
-                """
-                for label, vals in row_items:
-                    table_html += "<tr>"
-                    table_html += f'<td style="background-color: #f8f9fa; border-radius: 8px; padding: 8px; font-weight: bold; color: #444;">{label}</td>'
-                    for val in vals:
-                        # 텍스트 길이에 따른 폰트 조절
-                        f_size = "0.75rem" if len(val) <= 4 else "0.65rem"
-                        desc = SAJU_TERMS.get(val.replace(" ˅", ""), "")
-                        tooltip = f' title="{desc}"' if desc else ""
-                        table_html += f'<td{tooltip} style="background-color: #ffffff; border: 1px solid #eee; border-radius: 8px; padding: 8px; font-size: {f_size}; color: #333; cursor: help;">{val}</td>'
-                    table_html += "</tr>"
-                table_html += "</table></div>"
-                st.markdown(table_html, unsafe_allow_html=True)
+                render_analysis_table(
+                    f"{sel_age}세 대운({sel_daeun['ganzhi']}) 상세 분석",
+                    "선택하신 대운이 원국의 각 기둥(연,월,일,시)과 맺는 명리적 상호작용을 항목별로 풀이합니다.",
+                    row_labels, column_headers, data_grid
+                )
                 
                 st.markdown("---")
 
@@ -506,18 +524,16 @@ def main():
                     bg_color = "#fff0f6" if is_sel_year else ("#fffdf0" if is_now else "#ffffff")
                     
                     with s_cols[idx]:
-                        st.markdown(f"""
-                        <div class='{card_class}' style='padding:15px 5px; min-height:220px;'>
-                            <div style='font-size:0.85rem; font-weight:bold; color:#666; margin-bottom:5px;'>{s_year}년 {"(현재)" if is_now else ""}</div>
-                            <div style='font-size:2rem; font-weight:bold; color:{border_color}; margin:8px 0;'>{s_item['ganzhi']}</div>
-                            <div style='font-size:0.7rem; color:#999;'>십성</div>
-                            <div style='font-size:0.95rem; color:#d32f2f; font-weight:500;'>{s_item['stem_ten_god']} | {s_item['branch_ten_god']}</div>
-                            <div style='font-size:0.7rem; color:#999; margin-top:3px;'>운성</div>
-                            <div style='font-size:0.9rem; color:#1976d2; font-weight:500;'>{s_item['twelve_growth']}</div>
-                            <div style='font-size:0.8rem; color:#e67e22; margin-top:8px;'>✨ {s_item['sinsal']}</div>
-                            <div style='font-size:0.75rem; color:#9b59b6;'>🔗 {s_item['relations']}</div>
-                        </div>
-                        """, unsafe_allow_html=True)
+                        render_saju_card(
+                            f"{s_year}년 {'(현재)' if is_now else ''}",
+                            s_item['ganzhi'],
+                            s_item['stem_ten_god'],
+                            s_item['branch_ten_god'],
+                            s_item['twelve_growth'],
+                            f"✨ {s_item['sinsal']}",
+                            f"🔗 {s_item['relations']}",
+                            is_sel_year
+                        )
                         if st.button(f"{s_year}년 선택", key=f"btn_year_{s_year}", use_container_width=True):
                             st.session_state['selected_seyun_year'] = s_year
                             st.rerun()
@@ -530,96 +546,22 @@ def main():
                 sel_daeun = next((d for d in data['fortune']['list'] if d['age'] == sel_daeun_age), None)
                 
                 if sel_seyun:
-                    st.markdown(f"### 🔍 {sel_year}년 세운({sel_seyun['ganzhi']}) 상세 분석")
-                    st.info(f"선택하신 세운이 원국(4주) 및 현재 대운({sel_daeun['ganzhi'] if sel_daeun else '-'})과 맺는 복합 상호작용을 풀이합니다.")
-                    
-                    # 관계 산출 함수 (세운 기준)
-                    def get_seyun_relation(target_pillar_val, target_name):
-                        if not target_pillar_val or len(target_pillar_val) < 2: return {}
-                        s_ganzhi = sel_seyun['ganzhi']
-                        s_stem, s_branch = s_ganzhi[0], s_ganzhi[1]
-                        t_stem, t_branch = target_pillar_val[0], target_pillar_val[1]
-                        
-                        from saju_utils import GAN_TEN_GODS, TWELVE_GROWTH, STEM_RELATIONS, BRANCH_RELATIONS
-                        day_gan = pillars['day']['stem']
-                        
-                        # 관계 산출 (합충형파해 vs 신살 분리)
-                        inter_rels = []
-                        sinsal_rels = []
-                        
-                        if STEM_RELATIONS['충'].get(s_stem) == t_stem: inter_rels.append("천간충(沖)")
-                        if STEM_RELATIONS['합'].get(s_stem) == t_stem: inter_rels.append("천간합(合)")
-                        if BRANCH_RELATIONS['충'].get(s_branch) == t_branch: inter_rels.append("충(沖)")
-                        if BRANCH_RELATIONS['합'].get(s_branch) == t_branch: inter_rels.append("합(合)")
-                        
-                        h_val = BRANCH_RELATIONS['형'].get(s_branch)
-                        if h_val:
-                            if isinstance(h_val, list):
-                                if t_branch in h_val: inter_rels.append("형(刑)")
-                            elif h_val == t_branch: inter_rels.append("형(刑)")
-                        
-                        if BRANCH_RELATIONS['파'].get(s_branch) == t_branch: inter_rels.append("파(破)")
-                        if BRANCH_RELATIONS['해'].get(s_branch) == t_branch: inter_rels.append("해(害)")
-                        
-                        # 원진, 귀문은 신살 영역으로 분류
-                        if BRANCH_RELATIONS['원진'].get(s_branch) == t_branch: sinsal_rels.append("원진(元嗔)")
-                        if BRANCH_RELATIONS['귀문'].get(s_branch) == t_branch: sinsal_rels.append("귀문(鬼門)")
-                        
-                        # 12신살 (년지 기준)
-                        year_branch = pillars['year']['branch']
-                        from saju_utils import get_sinsal_list
-                        twelve_sinsal = get_sinsal_list(year_branch, s_branch)
-                        if twelve_sinsal and twelve_sinsal not in sinsal_rels:
-                            sinsal_rels.append(twelve_sinsal)
-                        
-                        return {
-                            "name": target_name,
-                            "ganzhi": target_pillar_val,
-                            "ten_god": GAN_TEN_GODS.get(day_gan, {}).get(t_stem, '-'),
-                            "growth": TWELVE_GROWTH.get(s_stem, {}).get(t_branch, '-'),
-                            "sinsal": ", ".join(sinsal_rels) if sinsal_rels else "-",
-                            "interaction": ", ".join(inter_rels) if inter_rels else "평온"
-                        }
-
-                    # 분석 대상 설정: 4주 원국 + 대운
-                    targets = [
-                        ('hour', pillars['hour']['pillar'], "시주"),
-                        ('day', pillars['day']['pillar'], "일주"),
-                        ('month', pillars['month']['pillar'], "월주"),
-                        ('year', pillars['year']['pillar'], "연주"),
-                        ('daeun', sel_daeun['ganzhi'] if sel_daeun else None, "대운")
+                    # 이미지 2 스타일 세운 상세 분석 테이블 호출
+                    syc_headers = [d['name'] for d in sy_data]
+                    sy_grid = [
+                        [d['ganzhi'] for d in sy_data],
+                        [d['ten_god'] for d in sy_data],
+                        [d['growth'] for d in sy_data],
+                        [d['sinsal'] for d in sy_data],
+                        [d['interaction'] for d in sy_data]
                     ]
                     
-                    sy_data = [get_seyun_relation(t[1], t[2]) for t in targets if t[1]]
-                    
-                    # 모바일 최적화 고품격 세운 상세 분석 테이블 (HTML)
-                    syc_labels = ["분석 항목"] + [d['name'] for d in sy_data]
-                    sy_row_items = [
-                        ("대상 사주 간지", [d['ganzhi'] for d in sy_data]),
-                        ("대상 기둥 십성", [d['ten_god'] for d in sy_data]),
-                        ("세운 적용 운성", [d['growth'] for d in sy_data]),
-                        ("적용 신살·귀인", [d['sinsal'] for d in sy_data]),
-                        ("상호 관계 분석", [d['interaction'] for d in sy_data])
-                    ]
-                    
-                    table_html = f"""
-                    <div style="overflow-x: auto; margin-bottom: 20px;">
-                    <table style="width: 100%; border-collapse: separate; border-spacing: 4px; text-align: center; font-size: 0.75rem;">
-                        <tr>
-                            {"".join(f'<th style="background-color: #f3f0ff; border-radius: 6px; padding: 6px; min-width: 55px;">{l}</th>' for l in syc_labels)}
-                        </tr>
-                    """
-                    for label, vals in sy_row_items:
-                        table_html += "<tr>"
-                        table_html += f'<td style="background-color: #f8f9fa; border-radius: 6px; padding: 6px; font-weight: bold; color: #444;">{label}</td>'
-                        for val in vals:
-                            f_size = "0.75rem" if len(val) <= 4 else "0.65rem"
-                            desc = SAJU_TERMS.get(val.replace(" ˅", ""), "")
-                            tooltip = f' title="{desc}"' if desc else ""
-                            table_html += f'<td{tooltip} style="background-color: #ffffff; border: 1px solid #eee; border-radius: 6px; padding: 6px; font-size: {f_size}; cursor: help;">{val}</td>'
-                        table_html += "</tr>"
-                    table_html += "</table></div>"
-                    st.markdown(table_html, unsafe_allow_html=True)
+                    render_analysis_table(
+                        f"{sel_year}년 세운({sel_seyun['ganzhi']}) 상세 분석",
+                        f"선택하신 세운이 원국(4주) 및 현재 대운({sel_daeun['ganzhi'] if sel_daeun else '-'})과 맺는 복합 상호작용을 풀이합니다.",
+                        ["대상 사주 간지", "대상 기둥 십성", "세운 적용 운성", "적용 신살·귀인", "상호 관계 분석"],
+                        syc_headers, sy_grid
+                    )
                     
                     st.markdown("---")
 
@@ -645,18 +587,16 @@ def main():
                 card_class = "saju-card selected" if is_sel_month else "saju-card"
                 
                 with w_cols[(m-1) % 4]:
-                    st.markdown(f"""
-                    <div class='{card_class}' style='padding:10px; min-height:160px;'>
-                        <div style='font-size:0.9rem; font-weight:bold; color:#666;'>{m}월</div>
-                        <div style='font-size:1.8rem; font-weight:bold; color:#2c3e50; margin:5px 0;'>{wolun.get('ganzhi', '-')}</div>
-                        <div style='font-size:0.7rem; color:#999;'>십성</div>
-                        <div style='font-size:0.95rem; color:#d22d2d;'>{wolun.get('stem_ten_god', '-')} | {wolun.get('branch_ten_god', '-')}</div>
-                        <div style='font-size:0.7rem; color:#999;'>운성</div>
-                        <div style='font-size:0.85rem; color:#1976d2;'>{wolun.get('twelve_growth', '-')}</div>
-                        <div style='font-size:0.75rem; color:#f39c12; margin-top:3px;'>✨ 신살: {wolun.get('sinsal', '-')}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    # 버튼 스타일 및 크기는 전역 CSS가 제어
+                    render_saju_card(
+                        f"{m}월",
+                        wolun.get('ganzhi', '-'),
+                        wolun.get('stem_ten_god', '-'),
+                        wolun.get('branch_ten_god', '-'),
+                        wolun.get('twelve_growth', '-'),
+                        f"✨ 신살: {wolun.get('sinsal', '-')}",
+                        "-",
+                        is_sel_month
+                    )
                     if st.button(f"{m}월 선택", key=f"btn_month_{m}", use_container_width=True):
                         st.session_state['selected_wolun_month'] = m
                         st.rerun()
@@ -670,98 +610,22 @@ def main():
             from saju_utils import get_wolun_data
             wol_data = get_wolun_data(pillars['day']['stem'], pillars['year']['branch'], cur_seyun['ganzhi'], sel_month, pillars, pillars['day']['branch'])
             
-            st.markdown(f"### 🔍 {sel_month}월({wol_data['ganzhi']}) 상세 분석")
-            st.info(f"선택하신 {sel_month}월의 기운이 원국(4주) 및 대운/세운과 맺는 관계를 분석합니다.")
+            # 이미지 2 스타일 월운 상세 분석 테이블 호출
+            mw_headers = [d['label'] for d in mw_data if d['label'] != '항목']
+            mw_grid = [
+                [d['ganzhi'] for d in mw_data],
+                [d['ten_god'] for d in mw_data],
+                [d['growth'] for d in mw_data],
+                [d['interaction'] for d in mw_data]
+            ]
             
-            # 월운 상호작용 분석 테이블 (상세 구현)
-            def get_month_pillar_rel(p_key):
-                p_val = pillars[p_key]['ganzhi']
-                w_ganzhi = wol_data['ganzhi']
-                w_stem, w_branch = w_ganzhi[0], w_ganzhi[1]
-                t_stem, t_branch = p_val[0], p_val[1]
-                
-                from saju_utils import GAN_TEN_GODS, TWELVE_GROWTH, STEM_RELATIONS, BRANCH_RELATIONS
-                day_gan = pillars['day']['stem']
-                
-                rels = []
-                if STEM_RELATIONS['충'].get(w_stem) == t_stem: rels.append("천간충")
-                if STEM_RELATIONS['합'].get(w_stem) == t_stem: rels.append("천간합")
-                if BRANCH_RELATIONS['충'].get(w_branch) == t_branch: rels.append("충(沖)")
-                if BRANCH_RELATIONS['합'].get(w_branch) == t_branch: rels.append("합(合)")
-                h_val = BRANCH_RELATIONS['형'].get(w_branch)
-                if h_val and (t_branch in h_val if isinstance(h_val, list) else t_branch == h_val): rels.append("형(刑)")
-                
-                return {
-                    "ganzhi": p_val,
-                    "ten_god": GAN_TEN_GODS.get(day_gan, {}).get(t_stem, '-'),
-                    "growth": TWELVE_GROWTH.get(w_stem, {}).get(t_branch, '-'),
-                    "interaction": ", ".join(rels) if rels else "평온"
-                }
-
-            # 4주 원국 + 대운 + 세운 모두 포함
-            mw_targets = [
-                ('year', "연주"), ('month', "월주"), ('day', "일주"), ('hour', "시주"),
-                ('daeun', "대운"), ('seyun', "세운")
-            ]
-            mw_data = []
-            for k, label in mw_targets:
-                if k == 'daeun': gz = sel_daeun['ganzhi'] if sel_daeun else "-"
-                elif k == 'seyun': gz = cur_seyun['ganzhi'] if cur_seyun else "-"
-                else: 
-                    gz_info = pillars.get(k, {})
-                    gz = gz_info.get('pillar', '-') if isinstance(gz_info, dict) else "-"
-                
-                # 관계 추출 시 안전한 인덱싱 적용
-                w_gz = wol_data['ganzhi']
-                w_stem, w_branch = w_gz[0], w_gz[1]
-                
-                # gz가 최소 2글자(간지)여야 함
-                if gz != "-" and len(gz) >= 2:
-                    t_stem, t_branch = gz[0], gz[1]
-                else:
-                    t_stem, t_branch = "-", "-"
-                
-                from saju_utils import GAN_TEN_GODS, TWELVE_GROWTH, STEM_RELATIONS, BRANCH_RELATIONS
-                rels = []
-                if t_stem != "-" and STEM_RELATIONS['충'].get(w_stem) == t_stem: rels.append("천간충")
-                if t_stem != "-" and STEM_RELATIONS['합'].get(w_stem) == t_stem: rels.append("천간합")
-                if t_branch != "-" and BRANCH_RELATIONS['충'].get(w_branch) == t_branch: rels.append("충")
-                if t_branch != "-" and BRANCH_RELATIONS['합'].get(w_branch) == t_branch: rels.append("합")
-                h_val = BRANCH_RELATIONS['형'].get(w_branch)
-                if h_val and t_branch != "-" and (t_branch in h_val if isinstance(h_val, list) else t_branch == h_val): rels.append("형")
-
-                mw_data.append({
-                    "label": label,
-                    "ganzhi": gz,
-                    "ten_god": GAN_TEN_GODS.get(pillars['day']['stem'], {}).get(t_stem, '-'),
-                    "growth": TWELVE_GROWTH.get(w_stem, {}).get(t_branch, '-'),
-                    "interaction": ", ".join(rels) if rels else "평온"
-                })
-
-            mw_cols_labels = ["항목", "연주", "월주", "일주", "시주", "대운", "세운"]
-            table_html = f"""
-            <div style="overflow-x: auto; margin-bottom: 20px;">
-            <table style="width: 100%; border-collapse: separate; border-spacing: 4px; text-align: center; font-size: 0.7rem;">
-                <tr>
-                    {"".join(f'<th style="background-color: #fff9db; border-radius: 6px; padding: 6px; min-width: 50px;">{l}</th>' for l in mw_cols_labels)}
-                </tr>
-            """
-            row_defs = [
-                ("분석 대상 간지", [d['ganzhi'] for d in mw_data]),
-                ("해당 기둥 십성", [d['ten_god'] for d in mw_data]),
-                ("월운 적용 운성", [d['growth'] for d in mw_data]),
-                ("상호 관계 분석", [d['interaction'] for d in mw_data])
-            ]
-            for r_lab, r_vals in row_defs:
-                table_html += "<tr>"
-                table_html += f'<td style="background-color: #f8f9fa; border-radius: 6px; padding: 6px; font-weight: bold;">{r_lab}</td>'
-                for rv in r_vals:
-                    desc = SAJU_TERMS.get(rv, "")
-                    tooltip = f' title="{desc}"' if desc else ""
-                    table_html += f'<td{tooltip} style="background-color: #ffffff; border: 1px solid #eee; border-radius: 6px; padding: 6px; cursor: help;">{rv}</td>'
-                table_html += "</tr>"
-            table_html += "</table></div>"
-            st.markdown(table_html, unsafe_allow_html=True)
+            render_analysis_table(
+                f"{sel_month}월({wol_data['ganzhi']}) 상세 분석",
+                f"선택하신 {sel_month}월의 기운이 원국(4주) 및 대운/세운과 맺는 관계를 분석합니다.",
+                ["분석 대상 간지", "해당 기둥 십성", "월운 적용 운성", "상호 관계 분석"],
+                ["연주", "월주", "일주", "시주", "대운", "세운"],
+                mw_grid
+            )
 
         st.divider()
         
