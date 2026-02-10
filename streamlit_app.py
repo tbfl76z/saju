@@ -56,25 +56,32 @@ st.markdown("""
         margin: 0 auto !important;
     }
     
-    /* [심폐소생] 4개 이상의 컬럼(그리드, 표)만 선택하여 가로 배치 강제 */
-    /* 입력폼(2~3열)은 이 규칙에서 자동 제외되어 정상적으로 보임 */
-    div[data-testid="stHorizontalBlock"]:has(> div:nth-child(4)) {
+    /* [최후의 수단] 모든 가로 블록의 세로 쌓임 완전 차단 */
+    /* Streamlit의 모바일 자동 줄바꿈 기능을 완전히 무력화합니다. */
+    div[data-testid="stHorizontalBlock"] {
+        display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: stretch !important;
         width: 100% !important;
-        overflow-x: auto !important;
-        gap: 6px !important;
+        overflow-x: auto !important; /* 넘치는 경우 가로 스크롤 허용 */
+        gap: 8px !important;
     }
 
-    div[data-testid="stHorizontalBlock"]:has(> div:nth-child(4)) div[data-testid="column"] {
+    /* 모든 컬럼이 한 줄에 배치되도록 너비 강제 조정 */
+    div[data-testid="column"] {
         flex: 1 1 0% !important;
-        min-width: 60px !important;
+        min-width: 0 !important; /* 중요: 내부 내용에 상관없이 줄어들 수 있게 함 */
     }
 
-    /* 첫번째 컬럼(레이블 영역) 비율 확보 */
+    /* 4~5개 이상의 컬럼이 있는 경우(표, 그리드) 텍스트 가독성을 위한 최소 너비 */
+    div[data-testid="stHorizontalBlock"]:has(> div:nth-child(4)) div[data-testid="column"] {
+        min-width: 65px !important;
+    }
+
+    /* 상세 분석 표 레이블 영역 비율 확보 */
     div[data-testid="stHorizontalBlock"]:has(> div:nth-child(4)) div[data-testid="column"]:first-child {
-        flex: 1.5 1 0% !important;
+        flex: 1.6 1 0% !important;
         min-width: 85px !important;
     }
     
