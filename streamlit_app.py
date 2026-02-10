@@ -7,12 +7,12 @@ import glob
 from sajupy import calculate_saju, get_saju_details, lunar_to_solar
 from saju_utils import get_extended_saju_data
 
-# 페이지 설정: 제목 및 아이콘
-st.set_page_config(page_title="Destiny Code - AI 사주 풀이", page_icon="🔮", layout="centered")
+# 페이지 설정: 제목 및 아이콘 (최상단 배치 필수)
+st.set_page_config(page_title="Destiny Code - AI 사주 풀이", page_icon="🔮", layout="wide")
 
-# 프리미엄 스타일링 (Oriental Light Theme)
+# --- 전역 스타일 주입 (모든 버튼 및 카드 스타일 통일) ---
 st.markdown("""
-<style>
+    <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&display=swap');
     
     .main { background-color: #ffffff; color: #333333; }
@@ -24,30 +24,69 @@ st.markdown("""
         letter-spacing: 0.1em;
         margin-top: 20px;
     }
-    .stButton>button {
-        width: 100%;
-        background-color: #d4af37;
-        color: #ffffff;
-        font-family: 'Noto Serif KR', serif;
-        font-weight: 700;
-        border: none;
-        padding: 0.8rem;
-        border-radius: 5px;
+    
+    /* 버튼 스타일 통일 (이미지의 노란색 버튼) */
+    div.stButton > button {
+        background-color: #d4af37 !important;
+        color: white !important;
+        border-radius: 8px !important;
+        border: none !important;
+        font-weight: bold !important;
+        height: 2.8rem !important;
+        width: 100% !important;
+        margin-top: 5px !important;
         transition: all 0.3s ease;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+        font-family: 'Noto Serif KR', serif;
     }
-    .stButton>button:hover {
-        background-color: #c49b32;
+    div.stButton > button:hover {
+        background-color: #bfa02d !important;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
         transform: translateY(-2px);
     }
+    
+    /* 모바일 그리드 강제 (이미지 2 스타일) */
+    @media (max-width: 768px) {
+        div[data-testid="stHorizontalBlock"] {
+            flex-direction: row !important;
+            flex-wrap: wrap !important;
+            gap: 5px !important;
+        }
+        div[data-testid="column"] {
+            flex: 1 1 18% !important; 
+            min-width: 100px !important;
+        }
+        .wolun-grid div[data-testid="column"] {
+            flex: 1 1 23% !important;
+            min-width: 80px !important;
+        }
+    }
+    
+    /* 카드 공통 스타일 */
+    .saju-card {
+        border: 1px solid #e0e0e0;
+        border-radius: 15px;
+        padding: 15px;
+        text-align: center;
+        background-color: white;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        margin-bottom: 10px;
+        transition: transform 0.2s ease;
+    }
+    .saju-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+    }
+    .saju-card.selected {
+        border: 3px solid #d4af37 !important;
+        background-color: #fffcf0 !important;
+    }
+    
     .result-container {
         border: 2px solid #d4af37;
         padding: 25px;
         border-radius: 12px;
-        background-color: #fdfdfd;
-        color: #333333;
-        line-height: 1.8;
-        font-family: 'Noto Serif KR', serif;
+        background-color: #ffffff;
         box-shadow: 0 4px 15px rgba(212, 175, 55, 0.1);
     }
     /* 테이블 스타일링 */
@@ -331,30 +370,36 @@ def main():
                     if len(items) > 1:
                         st.divider()
 
-        # 4주 명식 고정 레이아웃 - 모바일 최적화 고품격 2x4 블록 디자인
-        def get_pill_html(top_label, main_text, sub_label, color="#2c3e50", sub_color="#666"):
+        # 4주 명식 고정 레이아웃 (HTML Table로 변경하여 그리드 꼬임 방지)
+        def get_pill_html_table(top_label, main_text, sub_label, color="#2c3e50", sub_color="#666"):
             return f"""
-            <div style="background: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 6px; text-align: center; box-shadow: 2px 2px 5px rgba(0,0,0,0.03);">
-                <div style="font-size: 0.7rem; color: #d4af37; margin-bottom: 2px;">{top_label}</div>
-                <div style="font-size: 1.4rem; font-weight: bold; color: {color};">{main_text}</div>
-                <div style="font-size: 0.75rem; color: {sub_color}; margin-top: 2px;">{sub_label}</div>
-            </div>
+            <td style="padding: 4px; width: 22%;">
+                <div style="background: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 10px 5px; text-align: center; box-shadow: 2px 2px 5px rgba(0,0,0,0.03);">
+                    <div style="font-size: 0.7rem; color: #d4af37; margin-bottom: 3px; font-weight: bold;">{top_label}</div>
+                    <div style="font-size: 1.6rem; font-weight: bold; color: {color}; margin: 2px 0;">{main_text}</div>
+                    <div style="font-size: 0.8rem; color: {sub_color}; margin-top: 3px; font-weight: 500;">{sub_label}</div>
+                </div>
+            </td>
             """
 
         st.markdown(f"""
-        <div style="display: grid; grid-template-columns: 0.6fr 1fr 1fr 1fr 1fr; gap: 6px; margin-bottom: 10px;">
-            <div style="display: flex; align-items: center; justify-content: center; font-weight: bold; color: #666; font-size: 0.8rem; background: #f8f9fa; border-radius: 8px;">천간</div>
-            {get_pill_html(data['ten_gods']['hour'], pillars['hour']['stem'], '시주')}
-            {get_pill_html(data['ten_gods']['day'], pillars['day']['stem'], '일주', color='#d32f2f')}
-            {get_pill_html(data['ten_gods']['month'], pillars['month']['stem'], '월주')}
-            {get_pill_html(data['ten_gods']['year'], pillars['year']['stem'], '연주')}
-            
-            <div style="display: flex; align-items: center; justify-content: center; font-weight: bold; color: #666; font-size: 0.8rem; background: #f8f9fa; border-radius: 8px;">지지</div>
-            {get_pill_html('시지', pillars['hour']['branch'], data['jiji_ten_gods']['hour'], sub_color="#d63384")}
-            {get_pill_html('일지', pillars['day']['branch'], data['jiji_ten_gods']['day'], sub_color="#d63384")}
-            {get_pill_html('월지', pillars['month']['branch'], data['jiji_ten_gods']['month'], sub_color="#d63384")}
-            {get_pill_html('연지', pillars['year']['branch'], data['jiji_ten_gods']['year'], sub_color="#d63384")}
-        </div>
+        <table style="width: 100%; border-collapse: separate; border-spacing: 4px; table-layout: fixed; margin-bottom: 10px;">
+            <tr>
+                <td style="width: 12%; background: #f8f9fa; border-radius: 10px; text-align: center; font-weight: bold; color: #666; font-size: 0.85rem;">천간</td>
+                {get_pill_html_table(data['ten_gods']['hour'], pillars['hour']['stem'], '시주')}
+                {get_pill_html_table(data['ten_gods']['day'], pillars['day']['stem'], '일주', color='#d32f2f')}
+                {get_pill_html_table(data['ten_gods']['month'], pillars['month']['stem'], '월주')}
+                {get_pill_html_table(data['ten_gods']['year'], pillars['year']['stem'], '연주')}
+            </tr>
+            <tr style="height: 8px;"></tr> <!-- 간격용 -->
+            <tr>
+                <td style="width: 12%; background: #f8f9fa; border-radius: 10px; text-align: center; font-weight: bold; color: #666; font-size: 0.85rem;">지지</td>
+                {get_pill_html_table('시지', pillars['hour']['branch'], data['jiji_ten_gods']['hour'], sub_color="#d63384")}
+                {get_pill_html_table('일지', pillars['day']['branch'], data['jiji_ten_gods']['day'], sub_color="#d63384")}
+                {get_pill_html_table('월지', pillars['month']['branch'], data['jiji_ten_gods']['month'], sub_color="#d63384")}
+                {get_pill_html_table('연지', pillars['year']['branch'], data['jiji_ten_gods']['year'], sub_color="#d63384")}
+            </tr>
+        </table>
         """, unsafe_allow_html=True)
         
         # 12운성 및 신살 한 줄 표시
@@ -386,17 +431,18 @@ def main():
             progress_val = min(val / 8, 1.0)
             cols[idx].progress(progress_val)
 
-        # 대운 리스트 - 풀 위드 카드 스타일
+        # 대운 리스트 - 이미지 4 스타일 (버튼 상단 배치, 고밀도 카드)
         daeun_info = data['fortune']
+        st.subheader("📅 대운(大運)의 흐름")
         st.write(f"현재 대운수: **{daeun_info['num']}** ({daeun_info['direction']})")
         
         for item in data['fortune']['list']:
             age_val = item.get('age', 0)
             is_sel_daeun = st.session_state.get('selected_daeun_age') == age_val
-            border_css = "2px solid #d4af37" if is_sel_daeun else "1px solid #e0e0e0"
+            border_css = "3px solid #d4af37" if is_sel_daeun else "1px solid #e0e0e0"
             bg_css = "#fffcf0" if is_sel_daeun else "#ffffff"
             
-            # 버튼 먼저 표시 (이미지 1 스타일)
+            # 버튼 상단 배치 (이미지 4 스타일) - 전역 CSS가 노란색으로 만들어줌
             if st.button(f"{age_val}세 대운 선택", key=f"btn_daeun_{age_val}"):
                 st.session_state['selected_daeun_age'] = age_val
                 birth_year = int(data.get('birth_date', '1990-01-01').split('-')[0])
@@ -404,15 +450,15 @@ def main():
                 st.rerun()
                 
             st.markdown(f"""
-            <div style='border:{border_css}; padding:20px; border-radius:15px; text-align:center; background-color:{bg_css}; margin-bottom:25px; box-shadow: 0 4px 10px rgba(0,0,0,0.08);'>
-                <div style='font-size:1.1rem; font-weight:bold; color:#f39c12; margin-bottom:8px;'>{age_val}세~</div>
-                <div style='font-size:3rem; font-weight:bold; color:#2c3e50; margin:5px 0;'>{item.get('ganzhi', '-')}</div>
-                <div style='font-size:0.75rem; color:#888;'>십성</div>
-                <div style='font-size:1.1rem; color:#d32f2f; margin-bottom:4px;'>{item.get('stem_ten_god', '-')} | {item.get('branch_ten_god', '-')}</div>
-                <div style='font-size:0.75rem; color:#888;'>운성</div>
-                <div style='font-size:1rem; color:#1976d2; margin-bottom:8px;'>{item.get('twelve_growth', '-')}</div>
-                <div style='font-size:0.95rem; color:#e67e22; margin-top:5px; border-top:1px solid #f0f0f0; padding-top:8px;'>✨ 신살: {item.get('sinsal', '-')}</div>
-                <div style='font-size:0.9rem; color:#9b59b6; margin-top:4px;'>🔗 관계: {item.get('relations', '-')}</div>
+            <div style='border:{border_css}; padding:25px; border-radius:15px; text-align:center; background-color:{bg_css}; margin-bottom:30px; box-shadow: 0 4px 12px rgba(0,0,0,0.06);'>
+                <div style='font-size:1.1rem; font-weight:bold; color:#f39c12; margin-bottom:10px;'>{age_val}세~</div>
+                <div style='font-size:3.5rem; font-weight:bold; color:#2c3e50; margin:10px 0;'>{item.get('ganzhi', '-')}</div>
+                <div style='font-size:0.85rem; color:#888; margin-top:10px;'>십성</div>
+                <div style='font-size:1.3rem; color:#d32f2f; margin-bottom:5px; font-weight:500;'>{item.get('stem_ten_god', '-')} | {item.get('branch_ten_god', '-')}</div>
+                <div style='font-size:0.85rem; color:#888; margin-top:5px;'>운성</div>
+                <div style='font-size:1.1rem; color:#1976d2; margin-bottom:12px; font-weight:500;'>{item.get('twelve_growth', '-')}</div>
+                <div style='font-size:1.1rem; color:#e67e22; margin-top:12px; border-top:1px solid #f0f0f0; padding-top:12px; font-weight:500;'>✨ 신살: {item.get('sinsal', '-')}</div>
+                <div style='font-size:1rem; color:#9b59b6; margin-top:6px; font-weight:500;'>🔗 관계: {item.get('relations', '-')}</div>
             </div>
             """, unsafe_allow_html=True)
 
@@ -542,21 +588,24 @@ def main():
                     is_sel_year = st.session_state.get('selected_seyun_year') == s_year
                     is_now = s_year == now_year
                     
+                    card_class = "saju-card selected" if is_sel_year else "saju-card"
                     border_color = "#d63384" if is_sel_year else ("#ffc107" if is_now else "#e0e0e0")
                     bg_color = "#fff0f6" if is_sel_year else ("#fffdf0" if is_now else "#ffffff")
                     
                     with s_cols[idx]:
                         st.markdown(f"""
-                        <div style='border:2px solid {border_color}; padding:10px; border-radius:12px; text-align:center; background-color:{bg_color}; margin-bottom:5px; min-height:180px;'>
-                            <div style='font-size:0.8rem; font-weight:bold; color:#666;'>{s_year}년 {"(현재)" if is_now else ""}</div>
-                            <div style='font-size:1.4rem; font-weight:bold; color:{border_color}; margin:3px 0;'>{s_item['ganzhi']}</div>
-                            <div style='font-size:0.8rem; color:#d32f2f;'>{s_item['stem_ten_god']} | {s_item['branch_ten_god']}</div>
-                            <div style='font-size:0.75rem; color:#1976d2;'>{s_item['twelve_growth']}</div>
-                            <div style='font-size:0.7rem; color:#388e3c; margin-top:3px;'>✨ {s_item['sinsal']}</div>
-                            <div style='font-size:0.65rem; color:#7b1fa2;'>🔗 {s_item['relations']}</div>
+                        <div class='{card_class}' style='padding:15px 5px; min-height:220px;'>
+                            <div style='font-size:0.85rem; font-weight:bold; color:#666; margin-bottom:5px;'>{s_year}년 {"(현재)" if is_now else ""}</div>
+                            <div style='font-size:2rem; font-weight:bold; color:{border_color}; margin:8px 0;'>{s_item['ganzhi']}</div>
+                            <div style='font-size:0.7rem; color:#999;'>십성</div>
+                            <div style='font-size:0.95rem; color:#d32f2f; font-weight:500;'>{s_item['stem_ten_god']} | {s_item['branch_ten_god']}</div>
+                            <div style='font-size:0.7rem; color:#999; margin-top:3px;'>운성</div>
+                            <div style='font-size:0.9rem; color:#1976d2; font-weight:500;'>{s_item['twelve_growth']}</div>
+                            <div style='font-size:0.8rem; color:#e67e22; margin-top:8px;'>✨ {s_item['sinsal']}</div>
+                            <div style='font-size:0.75rem; color:#9b59b6;'>🔗 {s_item['relations']}</div>
                         </div>
                         """, unsafe_allow_html=True)
-                        if st.button(f"{s_year}년 선택", key=f"btn_year_{s_year}"):
+                        if st.button(f"{s_year}년 선택", key=f"btn_year_{s_year}", use_container_width=True):
                             st.session_state['selected_seyun_year'] = s_year
                             st.rerun()
 
@@ -667,6 +716,7 @@ def main():
             # 선택된 연도 세운 정보 찾기
             cur_seyun = next((s for s in seyun_list if s['year'] == sel_year), seyun_list[0] if seyun_list else {})
             
+            st.markdown('<div class="wolun-grid">', unsafe_allow_html=True)
             w_cols = st.columns(4)
             for m in range(1, 13):
                 wolun = get_wolun_data(pillars.get('day', {}).get('stem', '甲'), 
@@ -677,12 +727,11 @@ def main():
                 
                 selected_month = st.session_state.get('selected_wolun_month', datetime.datetime.now().month)
                 is_sel_month = selected_month == m
-                border_color = "#d4af37" if is_sel_month else "#e0e0e0"
-                bg_color = "#fffdf0" if is_sel_month else "#ffffff"
+                card_class = "saju-card selected" if is_sel_month else "saju-card"
                 
                 with w_cols[(m-1) % 4]:
                     st.markdown(f"""
-                    <div style='border:1px solid {border_color}; padding:10px; border-radius:12px; text-align:center; background-color:{bg_color}; margin-bottom:8px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); min-height:160px;'>
+                    <div class='{card_class}' style='padding:10px; min-height:160px;'>
                         <div style='font-size:0.9rem; font-weight:bold; color:#666;'>{m}월</div>
                         <div style='font-size:1.8rem; font-weight:bold; color:#2c3e50; margin:5px 0;'>{wolun.get('ganzhi', '-')}</div>
                         <div style='font-size:0.7rem; color:#999;'>십성</div>
@@ -692,10 +741,11 @@ def main():
                         <div style='font-size:0.75rem; color:#f39c12; margin-top:3px;'>✨ 신살: {wolun.get('sinsal', '-')}</div>
                     </div>
                     """, unsafe_allow_html=True)
-                    # 버튼을 카드 바로 아래 배치 (이미지 2 스타일)
+                    # 버튼 스타일 및 크기는 전역 CSS가 제어
                     if st.button(f"{m}월 선택", key=f"btn_month_{m}", use_container_width=True):
                         st.session_state['selected_wolun_month'] = m
                         st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
 
         # --- 월운 상세 상호작용 분석 섹션 (NEW) ---
         sel_month = st.session_state.get('selected_wolun_month')
@@ -743,15 +793,18 @@ def main():
                 if k == 'daeun': gz = sel_daeun['ganzhi'] if sel_daeun else "-"
                 elif k == 'seyun': gz = cur_seyun['ganzhi'] if cur_seyun else "-"
                 else: 
-                    # pillars[k]가 딕셔너리이며 'pillar' 키를 가지고 있는지 안전하게 확인
                     gz_info = pillars.get(k, {})
                     gz = gz_info.get('pillar', '-') if isinstance(gz_info, dict) else "-"
                 
                 # 관계 추출 시 안전한 인덱싱 적용
                 w_gz = wol_data['ganzhi']
                 w_stem, w_branch = w_gz[0], w_gz[1]
-                t_stem = gz[0] if len(gz) >= 1 else "-"
-                t_branch = gz[1] if len(gz) >= 2 else "-"
+                
+                # gz가 최소 2글자(간지)여야 함
+                if gz != "-" and len(gz) >= 2:
+                    t_stem, t_branch = gz[0], gz[1]
+                else:
+                    t_stem, t_branch = "-", "-"
                 
                 from saju_utils import GAN_TEN_GODS, TWELVE_GROWTH, STEM_RELATIONS, BRANCH_RELATIONS
                 rels = []
